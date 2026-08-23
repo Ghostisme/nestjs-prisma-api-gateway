@@ -1,5 +1,6 @@
 # Lumax — Multi-Tenant AI Gateway Platform
 
+[![CI](https://github.com/Ghostisme/nestjs-prisma-api-gateway/actions/workflows/ci.yml/badge.svg)](https://github.com/Ghostisme/nestjs-prisma-api-gateway/actions/workflows/ci.yml)
 [![NestJS](https://img.shields.io/badge/NestJS-11-E0234E?logo=nestjs)](https://nestjs.com)
 [![Prisma](https://img.shields.io/badge/Prisma-7.8-2D3748?logo=prisma)](https://prisma.io)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)](https://postgresql.org)
