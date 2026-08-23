@@ -1,0 +1,13 @@
+node_modules
+dist
+.git
+.github
+.vscode
+.cursor
+*.md
+.env.local
+.env.development
+*.log
+coverage
+.husky
+.lefthook

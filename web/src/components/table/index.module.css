@@ -1,0 +1,94 @@
+.table :global(.ant-table-thead > tr > th) {
+  white-space: nowrap;
+}
+
+.table :global(.ant-table-thead > tr > th .ant-table-column-title) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.maxContent :global(.ant-table-header > table),
+.maxContent :global(.ant-table-body > table),
+.maxContent :global(.ant-table-content > table) {
+  min-width: max-content;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pagination :global(.ant-pagination-item),
+.pagination :global(.ant-pagination-prev),
+.pagination :global(.ant-pagination-next) {
+  margin-inline: 0;
+}
+
+.pagination :global(.ant-pagination-item) {
+  min-width: 32px;
+  height: 32px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background-color: #ffffff;
+  line-height: 30px;
+}
+
+.pagination :global(.ant-pagination-item a) {
+  color: #374151;
+}
+
+.pagination :global(.ant-pagination-item:hover),
+.pagination :global(.ant-pagination-item:focus) {
+  border-color: #1677ff;
+}
+
+.pagination :global(.ant-pagination-item:hover a),
+.pagination :global(.ant-pagination-item:focus a) {
+  color: #1677ff;
+}
+
+.pagination :global(.ant-pagination-item-active) {
+  border-color: #1677ff;
+  background-color: #ffffff;
+}
+
+.pagination :global(.ant-pagination-item-active a) {
+  color: #1677ff;
+  font-weight: 600;
+}
+
+.pagination :global(.ant-pagination-prev .ant-pagination-item-link),
+.pagination :global(.ant-pagination-next .ant-pagination-item-link) {
+  height: 32px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #374151;
+  line-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pagination :global(.ant-pagination-prev:hover .ant-pagination-item-link),
+.pagination :global(.ant-pagination-next:hover .ant-pagination-item-link) {
+  color: #1677ff;
+}
+
+.pagination :global(.ant-pagination-prev.ant-pagination-disabled .ant-pagination-item-link),
+.pagination :global(.ant-pagination-next.ant-pagination-disabled .ant-pagination-item-link) {
+  color: #9ca3af;
+}
+
+.paginationNav {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.paginationTotal {
+  color: #8c8c8c;
+  font-size: 12px;
+  line-height: 20px;
+}

@@ -1,0 +1,47 @@
+// import Logo from "@/assets/icons/ic-logo-badge.svg";
+
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+// import { Analytics as VercelAnalytics } from "@vercel/analytics/react";
+import { Helmet, HelmetProvider } from "react-helmet-async";
+import Logo from "@/assets/icons/ic-logo.svg";
+import { MotionLazy } from "./components/animate/motion-lazy";
+import { RouteLoadingProgress } from "./components/loading";
+import { ServerWakeupGate } from "./components/server-wakeup";
+import Toast from "./components/toast";
+import { GLOBAL_CONFIG } from "./global-config";
+import { AntdAdapter } from "./theme/adapter/antd.adapter";
+import { ThemeProvider } from "./theme/theme-provider";
+
+if (import.meta.env.DEV) {
+	import("react-scan").then(({ scan }) => {
+		scan({
+			enabled: false,
+			showToolbar: true,
+			log: false,
+			animationSpeed: "fast",
+		});
+	});
+}
+
+function App({ children }: { children: React.ReactNode }) {
+	return (
+		<HelmetProvider>
+			<QueryClientProvider client={new QueryClient()}>
+				<ThemeProvider adapters={[AntdAdapter]}>
+					{/* <VercelAnalytics debug={import.meta.env.PROD} /> */}
+					<Helmet>
+						<title>{GLOBAL_CONFIG.appName}</title>
+						<link rel="icon" href={Logo} />
+					</Helmet>
+					<Toast />
+					<RouteLoadingProgress />
+					<ServerWakeupGate enabled={import.meta.env.VITE_ENABLE_WAKEUP_GATE !== "false"}>
+						<MotionLazy>{children}</MotionLazy>
+					</ServerWakeupGate>
+				</ThemeProvider>
+			</QueryClientProvider>
+		</HelmetProvider>
+	);
+}
+
+export default App;

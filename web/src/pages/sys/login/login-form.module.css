@@ -1,0 +1,91 @@
+.codeBtn{
+  /* absolute right-0 top-0 h-full w-28 rounded-l-none hover:bg-transparent text-muted-foreground hover:text-primary */
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+.authPanel {
+	--login-card-height: 438px;
+	display: flex;
+	flex-direction: column;
+	height: var(--login-card-height);
+}
+
+.authCard {
+	background: rgba(255, 255, 255, 0.96);
+	border: 1px solid rgba(223, 232, 255, 0.9);
+	border-radius: 28px;
+	box-shadow: 0 24px 60px rgba(42, 89, 190, 0.08);
+	overflow: hidden;
+	padding: 24px 28px 28px;
+	backdrop-filter: blur(10px);
+}
+
+.authTabs {
+	flex: 1;
+	min-height: 0;
+}
+
+.authTabs :global(.ant-tabs-nav) {
+	margin-bottom: 0;
+}
+
+.authTabs :global(.ant-tabs-nav::before) {
+	border-bottom: 1px solid #edf2ff;
+}
+
+.authTabs :global(.ant-tabs-nav-list) {
+	width: 100%;
+}
+
+.authTabs :global(.ant-tabs-tab) {
+	flex: 1;
+	justify-content: center;
+	margin: 0;
+	padding: 0 0 12px;
+}
+
+.authTabs :global(.ant-tabs-tab + .ant-tabs-tab) {
+	margin-left: 0;
+}
+
+.authTabs :global(.ant-tabs-tab-btn) {
+	color: #98a2b3;
+	font-size: 13px;
+	font-weight: 500;
+}
+
+.authTabs :global(.ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn) {
+	color: #2f6bff;
+}
+
+.authTabs :global(.ant-tabs-ink-bar) {
+	background: #2f6bff;
+	border-radius: 999px;
+	height: 3px;
+}
+
+.authTabs :global(.ant-tabs-content-holder) {
+	padding-top: 8px;
+}
+
+.tenantSelectionTabs {
+	flex: 1;
+	min-height: 0;
+}
+
+.tenantSelectionTabs :global(.ant-tabs-content-holder) {
+	height: 100%;
+	min-height: 0;
+}
+
+.tenantSelectionTabs :global(.ant-tabs-content),
+.tenantSelectionTabs :global(.ant-tabs-tabpane),
+.tenantSelectionTabs :global(.ant-tabs-tabpane-active) {
+	height: 100%;
+}
+
+.submitBtn {
+	box-shadow: 0 10px 24px rgba(47, 107, 255, 0.18);
+}

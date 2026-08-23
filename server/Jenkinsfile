@@ -1,0 +1,122 @@
+pipeline {
+    agent any
+
+    environment {
+        APP_NAME   = 'lumax-service'
+        DEPLOY_DIR = '/opt/lumax-service'
+        NVM_DIR    = '/root/.nvm'
+    }
+
+    options {
+        timestamps()
+        timeout(time: 15, unit: 'MINUTES')
+        disableConcurrentBuilds()
+    }
+
+    stages {
+        stage('拉取代码') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('安装依赖') {
+            steps {
+                sh """
+                    export NVM_DIR="${NVM_DIR}"
+                    . "\$NVM_DIR/nvm.sh"
+
+                    echo ">>> Node: \$(node -v)  PNPM: \$(pnpm -v)"
+                    pnpm install --frozen-lockfile
+                """
+            }
+        }
+
+        stage('构建') {
+            steps {
+                sh """
+                    export NVM_DIR="${NVM_DIR}"
+                    . "\$NVM_DIR/nvm.sh"
+
+                    echo ">>> Prisma generate"
+                    npx prisma generate
+
+                    echo ">>> Build"
+                    pnpm build
+                """
+            }
+        }
+
+        stage('部署') {
+            steps {
+                sh """
+                    export NVM_DIR="${NVM_DIR}"
+                    . "\$NVM_DIR/nvm.sh"
+
+                    echo "=========================================="
+                    echo "  部署 ${APP_NAME}"
+                    echo "=========================================="
+
+                    echo ">>> 当前工作目录: \$(pwd)"
+                    ls -la dist/ || echo "dist 目录不存在！"
+
+                    echo ">>> [1/4] 同步文件到部署目录"
+                    mkdir -p ${DEPLOY_DIR}/logs
+                    rsync -a --delete \
+                        \${WORKSPACE}/dist/ ${DEPLOY_DIR}/dist/
+                    rsync -a --delete \
+                        \${WORKSPACE}/node_modules/ ${DEPLOY_DIR}/node_modules/
+                    cp -f \${WORKSPACE}/package.json ${DEPLOY_DIR}/
+                    cp -rf \${WORKSPACE}/prisma/ ${DEPLOY_DIR}/prisma/
+                    cp -f \${WORKSPACE}/.env.production ${DEPLOY_DIR}/ 2>/dev/null || true
+
+                    echo ">>> [2/4] 启动/重启 PM2"
+                    if pm2 describe ${APP_NAME} > /dev/null 2>&1; then
+                        echo ">>> 进程已存在，尝试 reload"
+                        if ! pm2 reload ${APP_NAME} --update-env; then
+                            echo ">>> reload 失败，删除残留进程后重新启动"
+                            pm2 delete ${APP_NAME} || true
+                            NODE_ENV=production pm2 start ${DEPLOY_DIR}/dist/src/main.js \\
+                                --name ${APP_NAME} \\
+                                --cwd ${DEPLOY_DIR} \\
+                                --max-memory-restart 1G \\
+                                --kill-timeout 5000 \\
+                                -e ${DEPLOY_DIR}/logs/error.log \\
+                                -o ${DEPLOY_DIR}/logs/output.log
+                        fi
+                    else
+                        echo ">>> 进程不存在，首次启动"
+                        NODE_ENV=production pm2 start ${DEPLOY_DIR}/dist/src/main.js \\
+                            --name ${APP_NAME} \\
+                            --cwd ${DEPLOY_DIR} \\
+                            --max-memory-restart 1G \\
+                            --kill-timeout 5000 \\
+                            -e ${DEPLOY_DIR}/logs/error.log \\
+                            -o ${DEPLOY_DIR}/logs/output.log
+                    fi
+
+                    echo ">>> [3/4] 保存 PM2 进程列表（开机自启）"
+                    pm2 save
+
+                    echo ">>> [4/4] 查看状态"
+                    sleep 3
+                    pm2 show ${APP_NAME}
+
+                    echo "=========================================="
+                    echo "  部署完成: ${APP_NAME}"
+                    echo "  服务地址: http://localhost:9008"
+                    echo "=========================================="
+                """
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "部署成功 => ${APP_NAME}"
+        }
+        failure {
+            echo "部署失败，请检查日志"
+        }
+    }
+}

@@ -1,0 +1,892 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ========== 对话与 Token 统计域 ==========
+
+/// 对话记录表
+model LumaxConversation {
+  /// 主键ID
+  id                 Int       @id @default(autoincrement())
+  /// 租户ID
+  tenantId           Int       @map("tenant_id")
+  /// 会话线程ID
+  threadId           String    @map("thread_id")
+  /// 用户ID
+  userId             Int       @map("user_id")
+  /// 用户名
+  username           String    @default("")
+  /// 部门ID
+  deptId             Int?      @map("dept_id")
+  /// 模型名称
+  modelName          String    @default("") @map("model_name")
+  /// 智能体名称
+  agentName          String    @default("") @map("agent_name")
+  /// 技能名称
+  skillName          String    @default("") @map("skill_name")
+  /// 对话标题
+  title              String    @default("")
+  /// 消息数量
+  messageCount       Int       @default(0) @map("message_count")
+  /// 输入Token数
+  inputTokens        Int       @default(0) @map("input_tokens")
+  /// 输出Token数
+  outputTokens       Int       @default(0) @map("output_tokens")
+  /// 总Token数
+  totalTokens        Int       @default(0) @map("total_tokens")
+  /// 开始时间
+  startTime          DateTime  @map("start_time")
+  /// 结束时间
+  endTime            DateTime? @map("end_time")
+  /// 持续时长（秒）
+  durationSeconds    Int       @default(0) @map("duration_seconds")
+  /// 满意度评价
+  satisfaction       String    @default("none")
+  /// 对话状态
+  status             String    @default("ongoing")
+  /// 缓存命中Token数
+  cacheReadTokens    Int       @default(0) @map("cache_read_tokens")
+  /// 推理Token数（R1类模型思考token）
+  reasoningTokens    Int       @default(0) @map("reasoning_tokens")
+  /// 对话总费用（元）
+  totalCost          Decimal   @default(0) @map("total_cost") @db.Decimal(12, 6)
+  /// 违禁词命中次数
+  bannedWordHitCount Int       @default(0) @map("banned_word_hit_count")
+  /// 创建时间
+  createdAt          DateTime  @default(now()) @map("created_at")
+  /// 更新时间
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  tokenConsumptions LumaxTokenConsumption[]
+  messages          LumaxConversationMessage[]
+  feedbacks         LumaxFeedback[]
+  triggers          LumaxBannedWordTrigger[]
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([threadId])
+  @@index([startTime])
+  @@index([status])
+  @@map("lumax_conversation")
+}
+
+/// Token消耗记录表
+model LumaxTokenConsumption {
+  /// 主键ID
+  id             Int      @id @default(autoincrement())
+  /// 租户ID
+  tenantId       Int      @map("tenant_id")
+  /// 对话ID
+  conversationId Int?     @map("conversation_id")
+  threadId       String?  @map("thread_id")
+  runId          String?  @map("run_id")
+  idempotencyKey String?  @unique @map("idempotency_key")
+  /// 用户ID
+  userId         Int      @map("user_id")
+  /// 模型名称
+  modelName      String   @default("") @map("model_name")
+  /// 智能体名称
+  agentName      String   @default("") @map("agent_name")
+  /// 技能名称
+  skillName      String   @default("") @map("skill_name")
+  /// 工具调用次数
+  toolCallsCount Int      @default(0) @map("tool_calls_count")
+  /// 输入Token数
+  inputTokens    Int      @default(0) @map("input_tokens")
+  /// 输出Token数
+  outputTokens   Int      @default(0) @map("output_tokens")
+  /// 总Token数
+  totalTokens      Int      @default(0) @map("total_tokens")
+  /// 缓存命中Token数（价格更低）
+  cacheReadTokens  Int      @default(0) @map("cache_read_tokens")
+  /// 缓存写入Token数
+  cacheWriteTokens Int      @default(0) @map("cache_write_tokens")
+  /// 推理Token数（R1类模型思考token）
+  reasoningTokens  Int      @default(0) @map("reasoning_tokens")
+  /// 输入费用（元）
+  inputCost        Decimal  @default(0) @map("input_cost") @db.Decimal(12, 6)
+  /// 输出费用（元）
+  outputCost       Decimal  @default(0) @map("output_cost") @db.Decimal(12, 6)
+  /// 缓存费用（元）
+  cacheCost        Decimal  @default(0) @map("cache_cost") @db.Decimal(12, 6)
+  /// 总费用（元）
+  totalCost        Decimal  @default(0) @map("total_cost") @db.Decimal(12, 6)
+  /// 推理模式（online/online_low_latency/batch）
+  inferenceMode    String   @default("online") @map("inference_mode")
+  /// 命中的价格分段ID
+  priceTierId      Int?     @map("price_tier_id")
+  /// 响应耗时（毫秒）
+  responseTimeMs   Int      @default(0) @map("response_time_ms")
+  /// 消耗时间
+  consumedAt       DateTime @default(now()) @map("consumed_at")
+
+  conversation LumaxConversation? @relation(fields: [conversationId], references: [id])
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([threadId])
+  @@index([runId])
+  @@index([consumedAt])
+  @@index([conversationId])
+  @@index([modelName])
+  @@map("lumax_token_consumption")
+}
+
+model LumaxConversationMessage {
+  id             Int      @id @default(autoincrement())
+  tenantId       Int      @map("tenant_id")
+  conversationId Int?     @map("conversation_id")
+  threadId       String   @map("thread_id")
+  runId          String?  @map("run_id")
+  idempotencyKey String?  @map("idempotency_key")
+  userId         Int      @map("user_id")
+  messageId      String   @map("message_id")
+  role           String
+  content        String   @db.Text
+  messageIndex   Int      @default(0) @map("message_index")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  conversation LumaxConversation? @relation(fields: [conversationId], references: [id])
+
+  @@unique([tenantId, userId, messageId])
+  @@index([tenantId])
+  @@index([userId])
+  @@index([threadId])
+  @@index([runId])
+  @@index([conversationId])
+  @@map("lumax_conversation_message")
+}
+
+/// 用户配额表
+model LumaxUserQuota {
+  /// 主键ID
+  id          Int      @id @default(autoincrement())
+  /// 租户ID
+  tenantId    Int      @map("tenant_id")
+  /// 用户ID
+  userId      Int      @map("user_id")
+  /// 用户名
+  username    String   @default("")
+  /// 部门ID
+  deptId      Int?     @map("dept_id")
+  /// 总配额（-1表示不限制）
+  totalQuota  Int      @default(-1) @map("total_quota")
+  /// 已使用配额
+  usedQuota   Int      @default(0) @map("used_quota")
+  /// 配额周期
+  quotaPeriod String   @default("unlimited") @map("quota_period")
+  /// 创建时间
+  createdAt   DateTime @default(now()) @map("created_at")
+  /// 更新时间
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  operations LumaxQuotaOperation[]
+
+  @@unique([tenantId, userId])
+  @@map("lumax_user_quota")
+}
+
+/// 配额操作记录表
+model LumaxQuotaOperation {
+  /// 主键ID
+  id            Int      @id @default(autoincrement())
+  /// 租户ID
+  tenantId      Int      @map("tenant_id")
+  /// 用户ID
+  userId        Int      @map("user_id")
+  /// 操作人ID
+  operatorId    Int      @map("operator_id")
+  /// 操作人姓名
+  operatorName  String   @default("") @map("operator_name")
+  /// 操作类型
+  operationType String   @map("operation_type")
+  /// 原始配额
+  originalQuota Int      @map("original_quota")
+  /// 实际配额
+  actualQuota   Int      @map("actual_quota")
+  /// 创建时间
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  quota LumaxUserQuota @relation(fields: [tenantId, userId], references: [tenantId, userId])
+
+  @@index([tenantId])
+  @@index([userId])
+  @@map("lumax_quota_operation")
+}
+
+// ========== 用户反馈域 (每轮消息粒度) ==========
+
+/// 用户反馈表
+model LumaxFeedback {
+  /// 主键ID
+  id              Int      @id @default(autoincrement())
+  /// 租户ID
+  tenantId        Int      @map("tenant_id")
+  /// 对话ID
+  conversationId  Int?     @map("conversation_id")
+  /// 会话线程ID
+  threadId        String   @map("thread_id")
+  /// 消息ID
+  messageId       String   @map("message_id")
+  /// 运行ID
+  runId           String?  @map("run_id")
+  /// 用户ID
+  userId          Int      @map("user_id")
+  /// 消息序号
+  messageIndex    Int      @default(0) @map("message_index")
+  /// 反馈结果（positive/negative）
+  result          String
+  /// 用户提问内容
+  userQuestion    String   @default("") @map("user_question") @db.Text
+  /// 助手回答内容
+  assistantAnswer String   @default("") @map("assistant_answer") @db.Text
+  /// 智能体名称
+  agentName       String   @default("") @map("agent_name")
+  /// 反馈评论
+  comment         String?  @db.Text
+  /// 反馈时间
+  feedbackTime    DateTime @default(now()) @map("feedback_time")
+  /// 创建时间
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  conversation LumaxConversation? @relation(fields: [conversationId], references: [id])
+
+  @@unique([userId, messageId])
+  @@index([tenantId])
+  @@index([conversationId])
+  @@index([feedbackTime])
+  @@map("lumax_feedback")
+}
+
+// ========== 违禁词域 ==========
+
+/// 违禁词类型表
+model LumaxBannedWordCategory {
+  /// 主键ID
+  id           Int      @id @default(autoincrement())
+  /// 租户ID
+  tenantId     Int      @map("tenant_id")
+  /// 类型名称
+  name         String
+  /// 风险等级（high/medium/low）
+  riskLevel    String   @default("medium") @map("risk_level")
+  /// 词条数量
+  wordCount    Int      @default(0) @map("word_count")
+  /// 触发次数
+  triggerCount Int      @default(0) @map("trigger_count")
+  /// 创建时间
+  createdAt    DateTime @default(now()) @map("created_at")
+  /// 更新时间
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  words    LumaxBannedWord[]
+  triggers LumaxBannedWordTrigger[]
+
+  @@unique([tenantId, name])
+  @@map("lumax_banned_word_category")
+}
+
+/// 违禁词表
+model LumaxBannedWord {
+  /// 主键ID
+  id          Int      @id @default(autoincrement())
+  /// 租户ID
+  tenantId    Int      @map("tenant_id")
+  /// 违禁词类型ID
+  categoryId  Int      @map("category_id")
+  /// 违禁词内容
+  word        String
+  /// 触发方式（input/output）
+  triggerMode String   @default("input") @map("trigger_mode")
+  /// 匹配方式（exact/fuzzy/semantic/model）
+  matchMode   String   @default("exact") @map("match_mode")
+  /// 状态（enabled/disabled）
+  status      String   @default("enabled")
+  /// 创建时间
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  category LumaxBannedWordCategory @relation(fields: [categoryId], references: [id])
+  triggers LumaxBannedWordTrigger[]
+
+  @@index([tenantId])
+  @@index([categoryId])
+  @@index([status])
+  @@map("lumax_banned_word")
+}
+
+/// 违禁词触发记录表
+model LumaxBannedWordTrigger {
+  /// 主键ID
+  id              Int      @id @default(autoincrement())
+  /// 租户ID
+  tenantId        Int      @map("tenant_id")
+  /// 违禁词ID
+  wordId          Int      @map("word_id")
+  /// 违禁词类型ID
+  categoryId      Int      @map("category_id")
+  /// 对话ID
+  conversationId  Int?     @map("conversation_id")
+  /// 用户ID
+  userId          Int      @map("user_id")
+  /// 触发时间
+  triggerTime     DateTime @default(now()) @map("trigger_time")
+  /// 命中的违禁词
+  matchedWord     String   @default("") @map("matched_word")
+  /// 命中的句子
+  matchedSentence String   @default("") @map("matched_sentence") @db.Text
+  triggerSource   String?  @map("trigger_source")
+  matchedMode     String?  @map("matched_mode")
+  /// 创建时间
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  word         LumaxBannedWord         @relation(fields: [wordId], references: [id])
+  category     LumaxBannedWordCategory @relation(fields: [categoryId], references: [id])
+  conversation LumaxConversation?      @relation(fields: [conversationId], references: [id])
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([triggerTime])
+  @@map("lumax_banned_word_trigger")
+}
+
+// ========== 知识库域 ==========
+
+/// 知识库表
+model LumaxKnowledgeBase {
+  /// 主键ID
+  id             Int      @id @default(autoincrement())
+  /// 租户ID
+  tenantId       Int      @map("tenant_id")
+  /// 知识库名称
+  name           String
+  /// 知识库描述
+  description    String   @default("") @db.Text
+  /// 标签列表
+  tags           String[] @default([])
+  /// 文档数量
+  documentCount  Int      @default(0) @map("document_count")
+  /// 引用次数
+  referenceCount Int      @default(0) @map("reference_count")
+  /// 状态（enabled/disabled）
+  status         String   @default("enabled")
+  /// 创建时间
+  createdAt      DateTime @default(now()) @map("created_at")
+  /// 更新时间
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  documents LumaxKnowledgeBaseDocument[]
+
+  @@index([tenantId])
+  @@map("lumax_knowledge_base")
+}
+
+/// 知识库文档表
+model LumaxKnowledgeBaseDocument {
+  /// 主键ID
+  id              Int       @id @default(autoincrement())
+  /// 租户ID
+  tenantId        Int       @map("tenant_id")
+  /// 知识库ID
+  knowledgeBaseId Int       @map("knowledge_base_id")
+  /// 文件名称
+  fileName        String    @default("") @map("file_name")
+  /// 文件大小（字节）
+  fileSize        Int       @default(0) @map("file_size")
+  /// 文件类型
+  fileType        String    @default("") @map("file_type")
+  /// 文件地址
+  fileUrl         String    @default("") @map("file_url")
+  /// 处理状态（processing/completed/failed）
+  status          String    @default("processing")
+  /// 上传时间
+  uploadedAt      DateTime  @default(now()) @map("uploaded_at")
+  /// 处理完成时间
+  processedAt     DateTime? @map("processed_at")
+
+  knowledgeBase LumaxKnowledgeBase @relation(fields: [knowledgeBaseId], references: [id])
+
+  @@index([tenantId])
+  @@index([knowledgeBaseId])
+  @@map("lumax_knowledge_base_document")
+}
+
+// ========== 合作企业域 ==========
+
+/// 合作企业表
+model LumaxPartnerEnterprise {
+  /// 主键ID
+  id             Int      @id @default(autoincrement())
+  /// 租户ID
+  tenantId       Int      @map("tenant_id")
+  /// 品牌ID
+  brandId        Int?     @map("brand_id")
+  /// 品牌名称
+  brandName      String   @default("") @map("brand_name")
+  /// 合作企业名称
+  partnerName    String   @map("partner_name")
+  /// 联系人
+  contactPerson  String   @default("") @map("contact_person")
+  /// 联系电话
+  contactPhone   String   @default("") @map("contact_phone")
+  /// 后台模块权限
+  backendModules Json     @default("[]") @map("backend_modules")
+  /// AI功能权限
+  aiFunctions    Json     @default("[]") @map("ai_functions")
+  /// 用户数量
+  userCount      Int      @default(0) @map("user_count")
+  /// 状态（0=启用，1=禁用）
+  status         Int      @default(0)
+  /// 删除标记（0=正常，1=已删除）
+  delFlag        Int      @default(0) @map("del_flag")
+  /// 创建时间
+  createdAt      DateTime @default(now()) @map("created_at")
+  /// 更新时间
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@index([status])
+  @@map("lumax_partner_enterprise")
+}
+
+/// 品牌表
+model LumaxBrand {
+  /// 主键ID
+  id        Int      @id @default(autoincrement())
+  /// 租户ID
+  tenantId  Int      @map("tenant_id")
+  /// 品牌名称
+  name      String
+  /// 创建时间
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([tenantId, name])
+  @@map("lumax_brand")
+}
+
+// ========== LLM 模型管理域 ==========
+
+/// LLM模型管理表
+model LumaxLlmModel {
+  /// 主键ID
+  id               Int      @id @default(autoincrement())
+  /// 租户ID
+  tenantId         Int      @map("tenant_id")
+  /// 模型编码（唯一标识）
+  modelCode        String   @map("model_code")
+  /// 模型显示名称
+  modelName        String   @map("model_name")
+  /// 供应商
+  provider         String   @default("")
+  /// 模型类型（chat/completion/embedding/image）
+  modelType        String   @default("chat") @map("model_type")
+  /// 最大上下文Token数
+  maxContextTokens Int      @default(0) @map("max_context_tokens")
+  /// 最大输出Token数
+  maxOutputTokens  Int      @default(0) @map("max_output_tokens")
+  /// 输入价格
+  inputPrice       Decimal  @default(0) @map("input_price") @db.Decimal(12, 6)
+  /// 输出价格
+  outputPrice      Decimal  @default(0) @map("output_price") @db.Decimal(12, 6)
+  /// 缓存写入价格
+  cacheWritePrice  Decimal  @default(0) @map("cache_write_price") @db.Decimal(12, 6)
+  /// 缓存读取价格
+  cacheReadPrice          Decimal  @default(0) @map("cache_read_price") @db.Decimal(12, 6)
+  /// 缓存存储价格（元/百万token/小时）
+  cacheStoragePrice       Decimal  @default(0) @map("cache_storage_price") @db.Decimal(12, 6)
+  /// 计价单位（per_1k_tokens/per_1m_tokens）
+  priceUnit               String   @default("per_1k_tokens") @map("price_unit")
+  /// 货币
+  currency                String   @default("CNY")
+  /// 是否启用分段定价
+  hasTieredPricing        Boolean  @default(false) @map("has_tiered_pricing")
+  /// 支持的推理模式（逗号分隔）
+  supportedInferenceModes String   @default("online") @map("supported_inference_modes")
+  /// 状态（enabled/disabled）
+  status                  String   @default("enabled")
+  /// 排序序号
+  sortOrder               Int      @default(0) @map("sort_order")
+  /// 模型描述
+  description             String   @default("")
+  /// 创建时间
+  createdAt               DateTime @default(now()) @map("created_at")
+  /// 更新时间
+  updatedAt               DateTime @updatedAt @map("updated_at")
+
+  priceTiers LumaxLlmModelPriceTier[]
+
+  @@unique([tenantId, modelCode])
+  @@index([tenantId])
+  @@index([provider])
+  @@index([status])
+  @@index([modelType])
+  @@map("lumax_llm_model")
+}
+
+/// 模型分段定价表
+model LumaxLlmModelPriceTier {
+  /// 主键ID
+  id                Int      @id @default(autoincrement())
+  /// 关联模型ID
+  modelId           Int      @map("model_id")
+  /// 推理模式（online/online_low_latency/batch）
+  inferenceMode     String   @default("online") @map("inference_mode")
+  /// 输入长度下限（千token），含
+  inputLengthMin    Int      @default(0) @map("input_length_min")
+  /// 输入长度上限（千token），含，-1表示无上限
+  inputLengthMax    Int      @default(-1) @map("input_length_max")
+  /// 输出长度下限（千token），含
+  outputLengthMin   Int      @default(0) @map("output_length_min")
+  /// 输出长度上限（千token），含，-1表示无上限
+  outputLengthMax   Int      @default(-1) @map("output_length_max")
+  /// 输入价格（元/百万token）
+  inputPrice        Decimal  @default(0) @map("input_price") @db.Decimal(12, 6)
+  /// 输出价格（元/百万token）
+  outputPrice       Decimal  @default(0) @map("output_price") @db.Decimal(12, 6)
+  /// 缓存存储价格（元/百万token/小时）
+  cacheStoragePrice Decimal  @default(0) @map("cache_storage_price") @db.Decimal(12, 6)
+  /// 缓存输入价格（元/百万token）
+  cacheReadPrice    Decimal  @default(0) @map("cache_read_price") @db.Decimal(12, 6)
+  /// 排序序号
+  sortOrder         Int      @default(0) @map("sort_order")
+  /// 创建时间
+  createdAt         DateTime @default(now()) @map("created_at")
+  /// 更新时间
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  model LumaxLlmModel @relation(fields: [modelId], references: [id], onDelete: Cascade)
+
+  @@index([modelId])
+  @@index([inferenceMode])
+  @@map("lumax_llm_model_price_tier")
+}
+
+// ========== 字典域 ==========
+
+/// 字典类型表
+model LumaxDictType {
+  /// 主键ID
+  id          Int      @id @default(autoincrement())
+  /// 租户ID
+  tenantId    Int      @map("tenant_id")
+  /// 类型编码
+  typeCode    String   @map("type_code")
+  /// 类型名称
+  typeName    String   @map("type_name")
+  /// 描述
+  description String   @default("")
+  /// 状态（enabled/disabled）
+  status      String   @default("enabled")
+  /// 排序序号
+  sortOrder   Int      @default(0) @map("sort_order")
+  /// 创建时间
+  createdAt   DateTime @default(now()) @map("created_at")
+  /// 更新时间
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  items LumaxDictItem[]
+
+  @@unique([tenantId, typeCode])
+  @@map("lumax_dict_type")
+}
+
+/// 字典项表
+model LumaxDictItem {
+  /// 主键ID
+  id          Int      @id @default(autoincrement())
+  /// 租户ID
+  tenantId    Int      @map("tenant_id")
+  /// 类型编码
+  typeCode    String   @map("type_code")
+  /// 字典值
+  itemValue   String   @map("item_value")
+  /// 字典标签
+  itemLabel   String   @map("item_label")
+  /// 父级值
+  parentValue String?  @map("parent_value")
+  /// 扩展数据
+  extra       Json?
+  /// 状态（enabled/disabled）
+  status      String   @default("enabled")
+  /// 排序序号
+  sortOrder   Int      @default(0) @map("sort_order")
+  /// 创建时间
+  createdAt   DateTime @default(now()) @map("created_at")
+  /// 更新时间
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  dictType LumaxDictType @relation(fields: [tenantId, typeCode], references: [tenantId, typeCode])
+
+  @@unique([tenantId, typeCode, itemValue])
+  @@index([tenantId])
+  @@index([typeCode])
+  @@index([typeCode, status])
+  @@map("lumax_dict_item")
+}
+
+// ========== 用户扩展 (临时表) ==========
+
+/// 用户扩展信息表
+model LumaxUserExt {
+  /// 主键ID
+  id          Int      @id @default(autoincrement())
+  /// 租户ID
+  tenantId    Int      @map("tenant_id")
+  /// 用户ID
+  userId      Int      @map("user_id")
+  /// 平台ID列表
+  platformIds Json     @default("[]") @map("platform_ids")
+  /// 合作企业名称
+  partnerName String?  @map("partner_name")
+  /// 合作企业ID
+  partnerId   Int?     @map("partner_id")
+  /// 默认组织ID（关联 Java 侧组织）
+  defaultOrgId Int?    @map("default_org_id")
+  /// 创建时间
+  createdAt   DateTime @default(now()) @map("created_at")
+  /// 更新时间
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@unique([tenantId, userId])
+  @@map("lumax_user_ext")
+}
+
+// ========== API Key 管理域 ==========
+
+/// API Key 管理表
+model LumaxApiKey {
+  /// 主键ID
+  id          Int       @id @default(autoincrement())
+  /// 租户ID
+  tenantId    Int       @map("tenant_id")
+  /// 用户ID
+  userId      Int       @map("user_id")
+  /// Key 名称
+  name        String
+  /// Key 哈希值（存储 bcrypt 哈希）
+  keyHash     String    @map("key_hash")
+  /// Key 前缀（用于展示，如 lmx_sk_...abc）
+  keyPrefix   String    @map("key_prefix")
+  /// 作用域（JSON 数组）
+  scopes      Json      @default("[]")
+  /// 速率限制（每分钟请求数，-1 不限制）
+  rateLimit   Int       @default(-1) @map("rate_limit")
+  /// 过期时间
+  expiresAt   DateTime? @map("expires_at")
+  /// 最后使用时间
+  lastUsedAt  DateTime? @map("last_used_at")
+  /// 状态（active/revoked）
+  status      String    @default("active")
+  /// 创建时间
+  createdAt   DateTime  @default(now()) @map("created_at")
+  /// 更新时间
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([keyPrefix])
+  @@index([status])
+  @@map("lumax_api_key")
+}
+
+// ========== Agent 执行监控域 ==========
+
+/// Agent 执行记录表
+model LumaxAgentRun {
+  /// 主键ID
+  id            Int       @id @default(autoincrement())
+  /// 租户ID
+  tenantId      Int       @map("tenant_id")
+  /// 用户ID
+  userId        Int       @map("user_id")
+  /// 会话线程ID
+  threadId      String    @map("thread_id")
+  /// 智能体名称
+  agentName     String    @default("") @map("agent_name")
+  /// 技能名称
+  skillName     String    @default("") @map("skill_name")
+  /// 执行状态（running/completed/failed/cancelled）
+  status        String    @default("running")
+  /// 执行时长（毫秒）
+  durationMs    Int       @default(0) @map("duration_ms")
+  /// 总 Token 消耗
+  tokensTotal   Int       @default(0) @map("tokens_total")
+  /// 输入 Token
+  tokensIn      Int       @default(0) @map("tokens_in")
+  /// 输出 Token
+  tokensOut     Int       @default(0) @map("tokens_out")
+  /// 工具调用次数
+  toolCallsCount Int      @default(0) @map("tool_calls_count")
+  /// 错误类型
+  errorType     String?   @map("error_type")
+  /// 错误信息
+  errorMessage  String?   @map("error_message") @db.Text
+  /// 模型名称
+  modelName     String    @default("") @map("model_name")
+  /// 开始时间
+  startedAt     DateTime  @default(now()) @map("started_at")
+  /// 结束时间
+  endedAt       DateTime? @map("ended_at")
+  /// 创建时间
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([threadId])
+  @@index([status])
+  @@index([startedAt])
+  @@index([agentName])
+  @@map("lumax_agent_run")
+}
+
+// ========== 订阅与套餐域 ==========
+
+/// 套餐定义表
+model LumaxPlanConfig {
+  /// 主键ID
+  id              Int      @id @default(autoincrement())
+  /// 套餐层级（free/pro/enterprise）
+  tier            String   @unique
+  /// 套餐名称
+  name            String
+  /// 套餐描述
+  description     String   @default("")
+  /// 月价格（分）
+  priceMonthly    Int      @default(0) @map("price_monthly")
+  /// 月度 Token 上限（-1 不限制）
+  tokenLimitMonthly Int    @default(-1) @map("token_limit_monthly")
+  /// 并发数限制（-1 不限制）
+  concurrentLimit Int      @default(-1) @map("concurrent_limit")
+  /// 功能列表（JSON）
+  features        Json     @default("[]")
+  /// 状态（enabled/disabled）
+  status          String   @default("enabled")
+  /// 排序
+  sortOrder       Int      @default(0) @map("sort_order")
+  /// 创建时间
+  createdAt       DateTime @default(now()) @map("created_at")
+  /// 更新时间
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  subscriptions LumaxSubscription[]
+
+  @@map("lumax_plan_config")
+}
+
+/// 订阅表
+model LumaxSubscription {
+  /// 主键ID
+  id                Int       @id @default(autoincrement())
+  /// 租户ID
+  tenantId          Int       @map("tenant_id")
+  /// 套餐层级
+  planTier          String    @map("plan_tier")
+  /// 订阅状态（active/cancelled/expired/trialing）
+  status            String    @default("active")
+  /// 月度 Token 上限（从套餐继承或自定义覆盖）
+  tokenLimitMonthly Int       @default(-1) @map("token_limit_monthly")
+  /// 并发数限制
+  concurrentLimit   Int       @default(-1) @map("concurrent_limit")
+  /// 自定义功能覆盖（JSON）
+  featuresOverride  Json?     @map("features_override")
+  /// 周期开始时间
+  periodStart       DateTime  @map("period_start")
+  /// 周期结束时间
+  periodEnd         DateTime  @map("period_end")
+  /// 创建时间
+  createdAt         DateTime  @default(now()) @map("created_at")
+  /// 更新时间
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  plan LumaxPlanConfig @relation(fields: [planTier], references: [tier])
+
+  @@unique([tenantId])
+  @@index([status])
+  @@map("lumax_subscription")
+}
+
+// ========== 用量统计域 ==========
+
+/// 日用量统计表
+model LumaxUsageDailyStats {
+  /// 主键ID
+  id              Int      @id @default(autoincrement())
+  /// 租户ID
+  tenantId        Int      @map("tenant_id")
+  /// 用户ID（0 表示租户汇总）
+  userId          Int      @default(0) @map("user_id")
+  /// 统计日期
+  date            DateTime @db.Date
+  /// 模型名称（空字符串表示全模型汇总）
+  modelName       String   @default("") @map("model_name")
+  /// 输入 Token 总量
+  tokensInTotal   BigInt   @default(0) @map("tokens_in_total")
+  /// 输出 Token 总量
+  tokensOutTotal  BigInt   @default(0) @map("tokens_out_total")
+  /// 调用次数
+  callsCount      Int      @default(0) @map("calls_count")
+  /// 平均响应时长（毫秒）
+  avgDurationMs   Int      @default(0) @map("avg_duration_ms")
+  /// 创建时间
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@unique([tenantId, userId, date, modelName])
+  @@index([tenantId, date])
+  @@map("lumax_usage_daily_stats")
+}
+
+/// 月用量统计表
+model LumaxUsageMonthlyStats {
+  /// 主键ID
+  id             Int      @id @default(autoincrement())
+  /// 租户ID
+  tenantId       Int      @map("tenant_id")
+  /// 统计月份（每月1日）
+  month          DateTime @db.Date
+  /// 总 Token 消耗
+  totalTokens    BigInt   @default(0) @map("total_tokens")
+  /// 总调用次数
+  totalCalls     Int      @default(0) @map("total_calls")
+  /// 峰值并发数
+  peakConcurrent Int      @default(0) @map("peak_concurrent")
+  /// 活跃用户数
+  activeUsers    Int      @default(0) @map("active_users")
+  /// 创建时间
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@unique([tenantId, month])
+  @@map("lumax_usage_monthly_stats")
+}
+
+/// 配额预警记录表
+model LumaxQuotaAlert {
+  /// 主键ID
+  id            Int       @id @default(autoincrement())
+  /// 租户ID
+  tenantId      Int       @map("tenant_id")
+  /// 预警类型（warning_80/exceeded_100）
+  alertType     String    @map("alert_type")
+  /// 阈值百分比
+  thresholdPct  Int       @map("threshold_pct")
+  /// 当前使用百分比
+  currentPct    Int       @map("current_pct")
+  /// 月度 Token 上限
+  tokenLimit    BigInt    @default(0) @map("token_limit")
+  /// 当前已使用
+  tokenUsed     BigInt    @default(0) @map("token_used")
+  /// 是否已解决
+  resolved      Boolean   @default(false)
+  /// 解决时间
+  resolvedAt    DateTime? @map("resolved_at")
+  /// 创建时间
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  @@index([tenantId])
+  @@index([resolved])
+  @@index([createdAt])
+  @@map("lumax_quota_alert")
+}
