@@ -111,7 +111,7 @@ Four decisions that separate this from a CRUD demo:
 
 **Backend:** NestJS 11 · TypeScript 5 · Prisma 7.8 (`@prisma/adapter-pg`) · PostgreSQL 16 · Redis / ioredis · `@nestjs/schedule` · `@nestjs/swagger` · Nacos (optional)
 **Frontend:** React 19 · Vite 6 · Ant Design 6 · Tailwind CSS 4 · TanStack Query 5 · Zustand · React Router 7 · ApexCharts / D3
-**Tooling:** pnpm · Docker · Jenkins CI/CD · PM2 · Biome / ESLint · Jest
+**Tooling:** pnpm · Docker · GitHub Actions CI/CD (Jenkins pipeline also included) · PM2 · Biome / ESLint · Jest
 
 ---
 
@@ -167,7 +167,7 @@ nestjs-prisma-api-gateway/
 │   │   └── prisma/             # Prisma service + module
 │   ├── prisma/schema.prisma    # data model (per-tenant)
 │   ├── database/scripts/       # ordered SQL migrations V001…V010
-│   ├── Dockerfile · Jenkinsfile
+│   ├── Dockerfile · Jenkinsfile · .github/workflows/ci.yml
 │   └── README.md
 ├── web/                        # React 19 + Vite dashboard
 │   ├── src/{api,pages,components,layouts,routes,store,theme,ui}
@@ -180,7 +180,7 @@ nestjs-prisma-api-gateway/
 
 ## Deployment
 
-See [DEPLOY.md](DEPLOY.md) for Dockerized backend deployment (Jenkins + PM2),
+See [DEPLOY.md](DEPLOY.md) for Dockerized backend deployment (GitHub Actions CI, with a Jenkins + PM2 pipeline also provided),
 Nginx static hosting for the frontend, and notes on Railway / Render / Supabase.
 
 ---
