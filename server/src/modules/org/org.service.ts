@@ -8,15 +8,15 @@ import type { TokenConfigDto } from './dto/org.dto';
 
 const DEPT_TREE = {
   nodeId: '1',
-  nodeName: '总公司',
+  nodeName: 'Headquarters',
   nodeType: 'company' as const,
   memberCount: 10,
   children: [
-    { nodeId: '2', nodeName: '技术部', nodeType: 'department' as const, memberCount: 3, children: [] },
-    { nodeId: '3', nodeName: '运营部', nodeType: 'department' as const, memberCount: 2, children: [] },
-    { nodeId: '4', nodeName: '产品部', nodeType: 'department' as const, memberCount: 2, children: [] },
-    { nodeId: '5', nodeName: '销售部', nodeType: 'department' as const, memberCount: 2, children: [] },
-    { nodeId: '6', nodeName: '市场部', nodeType: 'department' as const, memberCount: 1, children: [] },
+    { nodeId: '2', nodeName: 'Engineering', nodeType: 'department' as const, memberCount: 3, children: [] },
+    { nodeId: '3', nodeName: 'Operations', nodeType: 'department' as const, memberCount: 2, children: [] },
+    { nodeId: '4', nodeName: 'Product', nodeType: 'department' as const, memberCount: 2, children: [] },
+    { nodeId: '5', nodeName: 'Sales', nodeType: 'department' as const, memberCount: 2, children: [] },
+    { nodeId: '6', nodeName: 'Marketing', nodeType: 'department' as const, memberCount: 1, children: [] },
   ],
 };
 
@@ -56,7 +56,7 @@ export class OrgService {
     };
 
     const node = findNode(DEPT_TREE as AnyNode, nodeId);
-    const nodeName = node?.nodeName ?? '未知';
+    const nodeName = node?.nodeName ?? 'Unknown';
     const nodeType = node?.nodeType ?? 'department';
 
     const userIds = DEPT_ID_MAP[nodeId] ?? [];
@@ -66,7 +66,7 @@ export class OrgService {
 
     const directMembers = quotas.map((q) => ({
       memberId: String(q.userId),
-      memberName: q.username || `用户${q.userId}`,
+      memberName: q.username || `User ${q.userId}`,
       department: deptName(q.deptId),
       tokenQuota: q.totalQuota,
       remainToken: q.totalQuota === -1 ? -1 : q.totalQuota - q.usedQuota,

@@ -14,9 +14,9 @@ const MOCK_USER: UserContext = {
   tenantId: 1,
   userId: 1,
   username: 'admin',
-  nickname: '开发管理员',
+  nickname: 'Dev Admin',
   deptId: 1,
-  deptName: '技术部',
+  deptName: 'Engineering',
   roles: ['ROLE_1'],
   permissions: [
     'lmxAdmin:aiDashboard:userDashboard',

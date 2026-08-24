@@ -86,6 +86,7 @@ export const AddBannedWordModal = ({ open, onClose, onSuccess }: AddBannedWordMo
 				</div>
 
 				<div>
+					<div className="text-sm font-medium text-[var(--foreground)] mb-2">Risk level</div>
 					<Radio.Group value={riskLevel} onChange={(e) => setRiskLevel(e.target.value)}>
 						<Space>
 							{RISK_OPTIONS.map((risk) => (

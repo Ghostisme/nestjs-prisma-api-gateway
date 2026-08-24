@@ -22,6 +22,16 @@ const dedupePermissionCodes = (permissions: string[] | undefined): string[] => {
 	return [...new Set(permissions)];
 };
 
+const DEMO_NICKNAMES: Record<string, string> = {
+	开发管理员: "Dev Admin",
+};
+
+const localizeDemoUserInfo = <T extends Partial<UserInfo>>(userInfo: T): T => {
+	const nickname = userInfo.nickname;
+	if (!nickname || !DEMO_NICKNAMES[nickname]) return userInfo;
+	return { ...userInfo, nickname: DEMO_NICKNAMES[nickname] };
+};
+
 type UserStore = {
 	userInfo: Partial<UserInfo>;
 	userToken: UserToken;
@@ -44,7 +54,7 @@ const useUserStore = create<UserStore>()(
 			actions: {
 				setUserInfo: (userInfo) => {
 					const permissions = normalizePermissions(userInfo.permissions);
-					set({ userInfo: { ...userInfo, permissions } });
+					set({ userInfo: localizeDemoUserInfo({ ...userInfo, permissions }) });
 				},
 				setUserToken: (userToken) => {
 					set({ userToken });
@@ -65,11 +75,18 @@ const useUserStore = create<UserStore>()(
 				[StorageEnum.UserToken]: state.userToken,
 				[StorageEnum.TenantId]: state.tenantId,
 			}),
+			onRehydrateStorage: () => (state) => {
+				if (!state?.userInfo) return;
+				const localized = localizeDemoUserInfo(state.userInfo);
+				if (localized !== state.userInfo) {
+					state.userInfo = localized;
+				}
+			},
 		},
 	),
 );
 
-export const useUserInfo = () => useUserStore((state) => state.userInfo);
+export const useUserInfo = () => useUserStore((state) => localizeDemoUserInfo(state.userInfo));
 export const useUserToken = () => useUserStore((state) => state.userToken);
 export const useTenantId = () => useUserStore((state) => state.tenantId);
 export const useUserPermissions = () => useUserStore((state) => state.userInfo.permissions || []);

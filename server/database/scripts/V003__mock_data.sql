@@ -104,20 +104,20 @@ INSERT INTO lumax_banned_word_trigger (tenant_id, word_id, category_id, conversa
 
 -- 知识库
 INSERT INTO lumax_knowledge_base (tenant_id, name, description, tags, document_count, reference_count, status) VALUES
-  (1, '达人知识库', '达人营销相关知识、案例和最佳实践', ARRAY['达人', '营销', '案例'], 89, 124, 'enabled'),
-  (1, '达人业务数据知识库', '达人业务数据分析相关的知识文档', ARRAY['数据', '分析', '报表'], 45, 67, 'enabled'),
-  (1, '达人行业知识库', '汽车行业及数字营销行业知识', ARRAY['汽车', '行业', '趋势'], 32, 48, 'enabled'),
-  (1, '达人资料库', '公司内部资料和规范文档', ARRAY['规范', '流程', '模板'], 28, 35, 'enabled'),
-  (1, '达人项目报告库', '项目复盘报告和总结', ARRAY['项目', '复盘', '报告'], 15, 22, 'disabled');
+  (1, 'Influencer Knowledge Base', 'Influencer marketing knowledge, case studies, and best practices', ARRAY['Influencer', 'Marketing', 'Cases'], 89, 124, 'enabled'),
+  (1, 'Business Analytics Library', 'Knowledge documents for influencer business analytics', ARRAY['Data', 'Analytics', 'Reports'], 45, 67, 'enabled'),
+  (1, 'Industry Insights Library', 'Automotive and digital-marketing industry knowledge', ARRAY['Auto', 'Industry', 'Trends'], 32, 48, 'enabled'),
+  (1, 'Internal Playbooks', 'Internal materials, standards, and process templates', ARRAY['Standards', 'Process', 'Templates'], 28, 35, 'enabled'),
+  (1, 'Project Reports Library', 'Project retrospectives and summary reports', ARRAY['Projects', 'Reviews', 'Reports'], 15, 22, 'disabled');
 
 -- 知识库文档
 INSERT INTO lumax_knowledge_base_document (tenant_id, knowledge_base_id, file_name, file_size, file_type, file_url, status, processed_at) VALUES
-  (1, 1, '产品手册v3.0.pdf', 2048000, 'pdf', 'https://oss.example.com/docs/product-manual-v3.pdf', 'completed', NOW()),
-  (1, 1, 'FAQ文档.docx', 512000, 'docx', 'https://oss.example.com/docs/faq.docx', 'completed', NOW()),
-  (1, 1, '达人营销案例集.pdf', 3200000, 'pdf', 'https://oss.example.com/docs/talent-cases.pdf', 'completed', NOW()),
-  (1, 2, '2026Q1业务数据报表.xlsx', 1500000, 'xlsx', 'https://oss.example.com/docs/q1-report.xlsx', 'completed', NOW()),
-  (1, 2, '数据分析方法论.pdf', 800000, 'pdf', 'https://oss.example.com/docs/data-analysis.pdf', 'processing', NULL),
-  (1, 3, '2026汽车行业白皮书.pdf', 5000000, 'pdf', 'https://oss.example.com/docs/auto-whitepaper.pdf', 'completed', NOW());
+  (1, 1, 'Product-Manual-v3.pdf', 2048000, 'pdf', 'https://oss.example.com/docs/product-manual-v3.pdf', 'completed', NOW()),
+  (1, 1, 'FAQ.docx', 512000, 'docx', 'https://oss.example.com/docs/faq.docx', 'completed', NOW()),
+  (1, 1, 'Influencer-Case-Studies.pdf', 3200000, 'pdf', 'https://oss.example.com/docs/talent-cases.pdf', 'completed', NOW()),
+  (1, 2, 'Q1-2026-Business-Report.xlsx', 1500000, 'xlsx', 'https://oss.example.com/docs/q1-report.xlsx', 'completed', NOW()),
+  (1, 2, 'Data-Analysis-Playbook.pdf', 800000, 'pdf', 'https://oss.example.com/docs/data-analysis.pdf', 'processing', NULL),
+  (1, 3, '2026-Auto-Industry-Whitepaper.pdf', 5000000, 'pdf', 'https://oss.example.com/docs/auto-whitepaper.pdf', 'completed', NOW());
 
 -- 合作企业
 INSERT INTO lumax_partner_enterprise (tenant_id, brand_id, brand_name, partner_name, contact_person, contact_phone, backend_modules, ai_functions, user_count, status) VALUES

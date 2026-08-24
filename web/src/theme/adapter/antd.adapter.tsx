@@ -1,7 +1,7 @@
 import { StyleProvider } from "@ant-design/cssinjs";
 import type { ThemeConfig } from "antd";
 import { App, ConfigProvider, theme } from "antd";
-import zhCN from "antd/locale/zh_CN";
+import enUS from "antd/locale/en_US";
 import { ThemeMode } from "#/enum";
 import { useSettings } from "@/store/settingStore";
 import { removePx } from "@/utils/theme";
@@ -52,13 +52,16 @@ export const AntdAdapter: UILibraryAdapter = ({ mode, children }) => {
 			siderBg: darkColorTokens.background.default,
 		},
 		Modal: {
-			contentBg: "#ffffff",
+			contentBg: colorTokens.background.paper,
+			headerBg: colorTokens.background.paper,
+			footerBg: colorTokens.background.paper,
+			titleColor: colorTokens.text.primary,
 		},
 	};
 
 	return (
 		<ConfigProvider
-			locale={zhCN}
+			locale={enUS}
 			theme={{ algorithm, token, components }}
 			tag={{
 				style: {

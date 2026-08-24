@@ -6,16 +6,16 @@
  */
 
 const DEPT_MAP: Record<number, string> = {
-  1: '技术部',
-  2: '运营部',
-  3: '市场部',
-  4: '产品部',
-  5: '销售部',
+  1: 'Engineering',
+  2: 'Operations',
+  3: 'Marketing',
+  4: 'Product',
+  5: 'Sales',
 };
 
 export function deptName(deptId: number | null | undefined): string {
   if (deptId === null || deptId === undefined) return '-';
-  return DEPT_MAP[deptId] ?? `部门${deptId}`;
+  return DEPT_MAP[deptId] ?? `Dept ${deptId}`;
 }
 
 export function deptIdsByName(name: string): number[] {

@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BusinessException } from '../../common/filters/business-exception.filter';
 import { ErrorCode } from '../../common/enums/error-code.enum';
+import { fmtDate } from '../../common/utils/format.util';
 import type { KnowledgeBaseListDto, CreateKnowledgeBaseDto, UpdateKnowledgeBaseDto } from './dto/knowledge-base.dto';
 
 @Injectable()
@@ -52,7 +53,7 @@ export class KnowledgeBaseService {
         documentCount: item.documentCount,
         referenceCount: item.referenceCount,
         status: this.mapStatus(item.status),
-        updatedAt: item.updatedAt,
+        updatedAt: fmtDate(item.updatedAt),
       })),
       total,
     };
@@ -75,14 +76,14 @@ export class KnowledgeBaseService {
         fileName: doc.fileName,
         fileSize: doc.fileSize,
         fileType: doc.fileType,
-        uploadTime: doc.uploadedAt,
+        uploadTime: fmtDate(doc.uploadedAt),
         status: doc.status,
       })) ?? [],
       documentCount: kb.documentCount,
       referenceCount: kb.referenceCount,
       status: this.mapStatus(kb.status),
-      createdAt: kb.createdAt,
-      updatedAt: kb.updatedAt,
+      createdAt: fmtDate(kb.createdAt),
+      updatedAt: fmtDate(kb.updatedAt),
     };
   }
 
