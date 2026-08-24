@@ -180,8 +180,13 @@ nestjs-prisma-api-gateway/
 
 ## Deployment
 
-See [DEPLOY.md](DEPLOY.md) for Dockerized backend deployment (GitHub Actions CI, with a Jenkins + PM2 pipeline also provided),
-Nginx static hosting for the frontend, and notes on Railway / Render / Supabase.
+Two projects from one repo: the React SPA (`web/`) and the NestJS gateway
+(`server/`), each deployable to **Vercel** — frontend as a static SPA, backend
+as a serverless function — backed by managed Postgres (Neon) and Redis
+(Upstash). The backend also runs as a long-running process (Docker / Jenkins +
+PM2 / Railway / Render), which additionally enables the cron aggregation jobs.
+
+See [DEPLOY.md](DEPLOY.md) for both paths, step by step.
 
 ---
 

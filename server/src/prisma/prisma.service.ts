@@ -46,8 +46,22 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   }
 
   async onModuleInit() {
-    await this.$connect();
-    this.logger.log('PostgreSQL connected');
+    // Do NOT let a cold/sleeping database block or crash app startup — this is
+    // essential on serverless: if $connect() threw here, app.init() would fail
+    // and the whole function would 500, taking down /health/ready with it. The
+    // readiness probe is precisely what should surface "DB waking up", so we
+    // connect best-effort and let the first real query (or the probe) drive the
+    // actual connection. Prisma lazily reconnects on demand anyway.
+    try {
+      await this.$connect();
+      this.logger.log('PostgreSQL connected');
+    } catch (error) {
+      this.logger.warn(
+        `PostgreSQL not reachable at startup (will connect on first query): ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
   }
 
   async onModuleDestroy() {

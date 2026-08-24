@@ -55,7 +55,9 @@ import { HealthModule } from './modules/health/health.module';
     ApiKeyModule,
     AgentMonitorModule,
     SubscriptionModule,
-    SchedulerModule,
+    // Cron jobs are gated by SCHEDULER_ENABLED — skipped on serverless (Vercel),
+    // enabled on a persistent host. See scheduler.module.ts for the rationale.
+    SchedulerModule.register(),
     DeerFlowProxyModule,
   ],
 })

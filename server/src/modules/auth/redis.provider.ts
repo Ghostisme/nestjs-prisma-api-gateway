@@ -70,11 +70,20 @@ export const redisProvider = {
       throw new Error(`Invalid numeric config: REDIS_DATABASE=${dbRaw}`);
     }
 
+    // Managed Redis (Upstash, Redis Cloud, …) requires TLS. Enable it when
+    // REDIS_TLS=true or for a known managed host, mirroring the SSL detection
+    // in prisma.service.ts. `rejectUnauthorized: false` accepts the provider's
+    // managed CA chain — fine for a demo BFF; tighten if you pin a CA.
+    const wantsTls =
+      configService.get<string>('REDIS_TLS') === 'true' ||
+      /[.]upstash[.]io|[.]redns[.]redis-cloud[.]com|[.]rediss[.]/i.test(host);
+
     const redis = new Redis({
       host,
       port,
       password,
       db,
+      ...(wantsTls ? { tls: { rejectUnauthorized: false } } : {}),
       maxRetriesPerRequest: 3,
       retryStrategy: (times) => {
         if (times > 10) {
