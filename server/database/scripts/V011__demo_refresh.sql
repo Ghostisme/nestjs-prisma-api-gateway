@@ -8,7 +8,9 @@
 -- Run AFTER V001–V010.
 -- ============================================================
 
--- 1) Spread conversations across the last ~14 days (deterministic by id)
+-- 1) Spread conversations across the last ~14 days, always in the PAST
+--    (anchored to NOW() going backwards, so it's timezone-safe and the
+--    "today" bucket is never empty regardless of the server's clock).
 UPDATE lumax_conversation c
 SET start_time = base.ts,
     end_time   = base.ts + make_interval(secs => GREATEST(c.duration_seconds, 60)),
@@ -16,17 +18,17 @@ SET start_time = base.ts,
     updated_at = base.ts
 FROM (
   SELECT id,
-         date_trunc('day', NOW())
-           - make_interval(days => ((row_number() OVER (ORDER BY id) - 1) % 14)::int)
-           + make_interval(hours => (9 + (id % 8))::int, mins => ((id * 7) % 60)::int) AS ts
+         NOW()
+           - make_interval(hours => ((row_number() OVER (ORDER BY id) - 1) * 27)::int)
+           - make_interval(mins => ((id * 7) % 60)::int) AS ts
   FROM lumax_conversation
   WHERE tenant_id = 1
 ) base
 WHERE c.id = base.id;
 
--- 2) Token consumption follows its conversation's (new) time
+-- 2) Token consumption follows its conversation's (new) time, kept in the past
 UPDATE lumax_token_consumption t
-SET consumed_at = c.start_time + make_interval(mins => ((t.id % 6) * 3)::int)
+SET consumed_at = c.start_time - make_interval(mins => ((t.id % 6) * 3)::int)
 FROM lumax_conversation c
 WHERE t.conversation_id = c.id
   AND t.tenant_id = 1;
@@ -51,8 +53,8 @@ WHERE c.id = agg.conversation_id;
 
 -- 5) Feedback follows its conversation's (new) time
 UPDATE lumax_feedback f
-SET feedback_time = c.start_time + INTERVAL '6 minutes',
-    created_at    = c.start_time + INTERVAL '6 minutes'
+SET feedback_time = c.start_time - INTERVAL '3 minutes',
+    created_at    = c.start_time - INTERVAL '3 minutes'
 FROM lumax_conversation c
 WHERE f.conversation_id = c.id
   AND f.tenant_id = 1;

@@ -1,9 +1,9 @@
 ﻿-- ============================================================
--- Lumax Service - DeerFlow 用量结算与消息持久化
--- 用途：
---   1. 为 Token 消耗表增加运行级幂等结算字段。
---   2. 新增按运行保存的对话消息明细表。
---   3. 对齐对话状态约束与应用层状态值。
+-- Lumax Service - DeerFlow usage settlement & message persistence
+-- Purpose:
+--   1. Add run-level idempotent settlement fields to token consumption.
+--   2. Add a per-run conversation message detail table.
+--   3. Align conversation status constraint with application status values.
 -- ============================================================
 
 ALTER TABLE lumax_token_consumption
@@ -15,13 +15,13 @@ ALTER TABLE lumax_token_consumption
   ADD COLUMN IF NOT EXISTS reasoning_tokens INTEGER DEFAULT 0,
   ADD COLUMN IF NOT EXISTS inference_mode VARCHAR(50) DEFAULT 'online';
 
-COMMENT ON COLUMN lumax_token_consumption.thread_id IS 'DeerFlow 对话线程 ID';
-COMMENT ON COLUMN lumax_token_consumption.run_id IS 'DeerFlow 单次 Agent 执行 ID';
-COMMENT ON COLUMN lumax_token_consumption.idempotency_key IS '运行级用量结算幂等键，用于防止重复扣费';
-COMMENT ON COLUMN lumax_token_consumption.cache_read_tokens IS '模型供应商返回的缓存读取 Token 数';
-COMMENT ON COLUMN lumax_token_consumption.cache_write_tokens IS '模型供应商返回的缓存写入或缓存创建 Token 数';
-COMMENT ON COLUMN lumax_token_consumption.reasoning_tokens IS '推理模型返回的思考/推理 Token 数';
-COMMENT ON COLUMN lumax_token_consumption.inference_mode IS '推理模式，例如 online 或 offline';
+COMMENT ON COLUMN lumax_token_consumption.thread_id IS 'DeerFlow conversation thread id';
+COMMENT ON COLUMN lumax_token_consumption.run_id IS 'DeerFlow single agent run id';
+COMMENT ON COLUMN lumax_token_consumption.idempotency_key IS 'Run-level settlement idempotency key to prevent double billing';
+COMMENT ON COLUMN lumax_token_consumption.cache_read_tokens IS 'Cache-read tokens returned by the model provider';
+COMMENT ON COLUMN lumax_token_consumption.cache_write_tokens IS 'Cache-write / cache-creation tokens returned by the model provider';
+COMMENT ON COLUMN lumax_token_consumption.reasoning_tokens IS 'Reasoning/thinking tokens returned by reasoning models';
+COMMENT ON COLUMN lumax_token_consumption.inference_mode IS 'Inference mode, e.g. online or offline';
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_token_consumption_idempotency_key
   ON lumax_token_consumption(idempotency_key)
@@ -45,19 +45,19 @@ CREATE TABLE IF NOT EXISTS lumax_conversation_message (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
-COMMENT ON TABLE lumax_conversation_message IS 'DeerFlow 运行结算时持久化的对话消息明细表';
-COMMENT ON COLUMN lumax_conversation_message.id IS '主键 ID';
-COMMENT ON COLUMN lumax_conversation_message.tenant_id IS '租户 ID';
-COMMENT ON COLUMN lumax_conversation_message.conversation_id IS '关联的 Lumax 对话 ID';
-COMMENT ON COLUMN lumax_conversation_message.thread_id IS 'DeerFlow 对话线程 ID';
-COMMENT ON COLUMN lumax_conversation_message.run_id IS 'DeerFlow 单次 Agent 执行 ID';
-COMMENT ON COLUMN lumax_conversation_message.idempotency_key IS '写入该消息的结算幂等键';
-COMMENT ON COLUMN lumax_conversation_message.user_id IS '用户 ID';
-COMMENT ON COLUMN lumax_conversation_message.message_id IS '消息 ID，来自 DeerFlow 或由线程/运行/序号生成';
-COMMENT ON COLUMN lumax_conversation_message.role IS '消息角色，例如 user 或 assistant';
-COMMENT ON COLUMN lumax_conversation_message.content IS '消息内容';
-COMMENT ON COLUMN lumax_conversation_message.message_index IS '消息在当前 DeerFlow 运行中的顺序';
-COMMENT ON COLUMN lumax_conversation_message.created_at IS '消息创建时间';
+COMMENT ON TABLE lumax_conversation_message IS 'Per-run conversation messages persisted at DeerFlow settlement time';
+COMMENT ON COLUMN lumax_conversation_message.id IS 'Primary key id';
+COMMENT ON COLUMN lumax_conversation_message.tenant_id IS 'Tenant id';
+COMMENT ON COLUMN lumax_conversation_message.conversation_id IS 'Related Lumax conversation id';
+COMMENT ON COLUMN lumax_conversation_message.thread_id IS 'DeerFlow conversation thread id';
+COMMENT ON COLUMN lumax_conversation_message.run_id IS 'DeerFlow single agent run id';
+COMMENT ON COLUMN lumax_conversation_message.idempotency_key IS 'Settlement idempotency key that wrote this message';
+COMMENT ON COLUMN lumax_conversation_message.user_id IS 'User id';
+COMMENT ON COLUMN lumax_conversation_message.message_id IS 'Message id, from DeerFlow or generated from thread/run/index';
+COMMENT ON COLUMN lumax_conversation_message.role IS 'Message role, e.g. user or assistant';
+COMMENT ON COLUMN lumax_conversation_message.content IS 'Message content';
+COMMENT ON COLUMN lumax_conversation_message.message_index IS 'Message order within the current DeerFlow run';
+COMMENT ON COLUMN lumax_conversation_message.created_at IS 'Message creation time';
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_conversation_message_tenant_user_message
   ON lumax_conversation_message(tenant_id, user_id, message_id);
