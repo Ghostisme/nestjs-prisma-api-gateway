@@ -46,7 +46,7 @@ export default function TagManagementPage() {
 		async (record: TagRecord) => {
 			try {
 				await tagService.deleteTag(record.id);
-				message.success("删除成功");
+				message.success("Deleted");
 				refreshList();
 			} catch (error) {
 				// message.error("删除失败");
@@ -61,7 +61,7 @@ export default function TagManagementPage() {
 		refreshList();
 	}, [refreshList]);
 
-	const scopeLabel = (type: number) => SCOPE_TYPE_OPTIONS.find((opt) => opt.value === type)?.label ?? "未知";
+	const scopeLabel = (type: number) => SCOPE_TYPE_OPTIONS.find((opt) => opt.value === type)?.label ?? "Unknown";
 
 	// const collapseItems = tagList.map((item) => ({
 	// 	key: String(item.id),
@@ -107,7 +107,7 @@ export default function TagManagementPage() {
 			{/* 固定顶部操作栏 */}
 			<div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0">
 				<Space>
-					<span className="text-sm text-gray-600">应用范围</span>
+					<span className="text-sm text-gray-600">Scope</span>
 					<Select
 						value={scopeType}
 						onChange={setScopeType}
@@ -118,7 +118,7 @@ export default function TagManagementPage() {
 				</Space>
 				<AuthGuard>
 					<Button type="primary" onClick={openCreate}>
-						新建标签
+						New Tag
 					</Button>
 				</AuthGuard>
 			</div>
@@ -127,7 +127,7 @@ export default function TagManagementPage() {
 			<div className="flex-1 min-h-0 overflow-y-auto px-5 py-4">
 				<Spin spinning={isLoading}>
 					{tagList.length === 0 && !isLoading ? (
-						<Empty description="暂无标签数据" />
+						<Empty description="No tags" />
 					) : (
 						<div className="flex flex-col gap-4">
 							{tagList.map((item) => (
@@ -146,13 +146,13 @@ export default function TagManagementPage() {
 									title={
 										<Space size="large">
 											<span className="font-semibold text-sm text-[#1D2129]">{item.name}</span>
-											<span className="text-xs text-gray-500 font-normal!">应用范围：{scopeLabel(item.scopeType)}</span>
+											<span className="text-xs text-gray-500 font-normal!">Scope: {scopeLabel(item.scopeType)}</span>
 											<span className="text-xs text-gray-500 font-normal!">
-												创建时间：
+												Created:{" "}
 												{dayjs(item.createTime).format("YYYY-MM-DD HH:mm:ss")}
 											</span>
 											<span className="text-xs text-gray-500 font-normal!">
-												创建人：{item.createUserName || "未知"}
+												Created by: {item.createUserName || "Unknown"}
 											</span>
 										</Space>
 									}
@@ -160,13 +160,13 @@ export default function TagManagementPage() {
 										<Space size={4}>
 											<AuthGuard>
 												<Button type="link" size="small" onClick={() => openEdit(item)}>
-													<span className="text-sm">编辑</span>
+													<span className="text-sm">Edit</span>
 												</Button>
 											</AuthGuard>
 											<AuthGuard>
-												<Popconfirm title="确认删除该标签吗？" onConfirm={() => handleDelete(item)}>
+												<Popconfirm title="Delete this tag?" onConfirm={() => handleDelete(item)}>
 													<Button type="link" size="small" danger>
-														<span className="text-sm">删除</span>
+														<span className="text-sm">Delete</span>
 													</Button>
 												</Popconfirm>
 											</AuthGuard>
@@ -186,7 +186,7 @@ export default function TagManagementPage() {
 												</Tag>
 											))
 										) : (
-											<span className="text-xs text-gray-400">暂无子标签</span>
+											<span className="text-xs text-gray-400">No sub-tags</span>
 										)}
 									</div>
 								</Card>

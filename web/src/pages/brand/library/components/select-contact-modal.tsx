@@ -51,44 +51,44 @@ export const SelectContactModal = ({ open, onCancel, onSelect, roleCode, title }
 				fields: [
 					{
 						name: "name",
-						label: "姓名",
+						label: "Name",
 						type: "input",
-						placeholder: "请输入姓名",
+						placeholder: "Enter name",
 					},
 					{
 						name: "email",
-						label: "联系邮箱",
+						label: "Email",
 						type: "input",
-						placeholder: "请输入联系邮箱",
+						placeholder: "Enter email",
 					},
 					{
 						name: "phone",
-						label: "联系电话",
+						label: "Phone",
 						type: "input",
-						placeholder: "请输入联系电话",
+						placeholder: "Enter phone",
 					},
 				],
 			},
 			columns: [
 				{
-					title: "品牌ID",
+					title: "Brand ID",
 					dataIndex: "brandId",
 					render: (val, record) => val || record.id || "-",
 				},
 				{
-					title: "姓名",
+					title: "Name",
 					dataIndex: "name",
 				},
 				{
-					title: "联系电话",
+					title: "Phone",
 					dataIndex: "phone",
 				},
 				{
-					title: "联系邮箱",
+					title: "Email",
 					dataIndex: "email",
 				},
 				{
-					title: "操作",
+					title: "Actions",
 					dataIndex: "operation",
 					render: (_, record) => (
 						<Button
@@ -98,7 +98,7 @@ export const SelectContactModal = ({ open, onCancel, onSelect, roleCode, title }
 								onCancel();
 							}}
 						>
-							确认添加
+							Add
 						</Button>
 					),
 				},

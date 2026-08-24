@@ -110,7 +110,7 @@ const DROPDOWN_HIDE_SCROLLBAR_CLASS = "brand-tree-select-dropdown-hide-scrollbar
 export function BrandTreeSelect({
 	value,
 	onChange,
-	placeholder = "请选择品牌/车型/车系",
+	placeholder = "Select brand/model/series",
 	disabled = false,
 	showSearch = true,
 	showScrollBar = true,

@@ -228,3 +228,41 @@ export interface UserBannedWordRank {
 	userName: string;
 	count: number;
 }
+
+// ======================== Display label maps ========================
+// These map raw data/enum values (kept as-is for the API) to English labels for display only.
+
+export const BANNED_WORD_CATEGORY_LABELS: Record<string, string> = {
+	政治敏感: "Political",
+	暴力恐怖: "Violence & Terror",
+	色情低俗: "Pornography",
+	商品违法: "Illegal Goods",
+	虚假宣传: "False Advertising",
+	歧视骚扰: "Discrimination",
+	广告营销: "Ad & Marketing",
+	不良诱导: "Harmful Inducement",
+	隐私侵犯: "Privacy Violation",
+	仇恨仇视: "Hate",
+	其他类型: "Other",
+};
+
+export const RISK_LEVEL_LABELS: Record<string, string> = {
+	高风险: "High Risk",
+	中风险: "Medium Risk",
+	低风险: "Low Risk",
+};
+
+export const BANNED_WORD_STATUS_LABELS: Record<string, string> = {
+	启用: "Enabled",
+	禁用: "Disabled",
+};
+
+export const INTERCEPT_STATUS_LABELS: Record<string, string> = {
+	已拦截: "Intercepted",
+	未拦截: "Not Intercepted",
+};
+
+export const QUOTA_LIMIT_LABELS: Record<string, string> = {
+	是: "Yes",
+	否: "No",
+};

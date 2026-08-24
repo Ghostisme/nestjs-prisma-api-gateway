@@ -34,11 +34,11 @@ export default function KnowledgeBaseCard({
 				<div className="grid grid-cols-2 gap-4 mb-4">
 					<div className="text-center py-3 rounded-lg bg-[var(--muted)]/50">
 						<div className="text-xl font-bold text-[var(--foreground)]">{item.documentCount}</div>
-						<div className="text-xs text-[var(--muted-foreground)] mt-1">文档数</div>
+						<div className="text-xs text-[var(--muted-foreground)] mt-1">Documents</div>
 					</div>
 					<div className="text-center py-3 rounded-lg bg-[var(--muted)]/50">
 						<div className="text-xl font-bold text-[var(--foreground)]">{item.referenceCount}</div>
-						<div className="text-xs text-[var(--muted-foreground)] mt-1">引用次数</div>
+						<div className="text-xs text-[var(--muted-foreground)] mt-1">References</div>
 					</div>
 				</div>
 
@@ -46,20 +46,20 @@ export default function KnowledgeBaseCard({
 			</div>
 
 			<div>
-				<div className="text-xs text-[var(--muted-foreground)] mb-3">更新于 {item.updatedAt}</div>
+				<div className="text-xs text-[var(--muted-foreground)] mb-3">Updated {item.updatedAt}</div>
 				<div className="flex gap-3 border-t border-[var(--border)] pt-3">
 					<Button type="link" className="p-0 text-sm" onClick={() => onEdit(item.id)}>
-						编辑
+						Edit
 					</Button>
 					<Button type="link" className="p-0 text-sm" onClick={() => onView(item.id)}>
-						查看
+						View
 					</Button>
 					<Popconfirm
-						title={isActive ? "确认禁用该知识库？" : "确认启用该知识库？"}
+						title={isActive ? "Disable this knowledge base?" : "Enable this knowledge base?"}
 						onConfirm={() => onToggleStatus(item.id, isActive ? "disabled" : "active")}
 					>
 						<Button type="link" className="p-0 text-sm" danger={isActive}>
-							{isActive ? "禁用" : "启用"}
+							{isActive ? "Disable" : "Enable"}
 						</Button>
 					</Popconfirm>
 				</div>

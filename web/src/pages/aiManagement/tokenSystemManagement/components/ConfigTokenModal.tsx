@@ -34,8 +34,9 @@ export const ConfigTokenModal = ({
 		}
 	}, [open]);
 
-	const title = scope === "node" ? "配置部门Token数" : "配置个人Token数";
-	const footerTip = scope === "node" ? "将统一配置该部门下的成员Token数" : "将单独配置该成员Token数";
+	const title = scope === "node" ? "Configure Dept Tokens" : "Configure Member Tokens";
+	const footerTip =
+		scope === "node" ? "This will apply the token quota to all members of the department" : "This will configure the token quota for this member only";
 
 	const handleOk = useCallback(async (): Promise<void> => {
 		const payload: TokenConfigPayload = {
@@ -57,8 +58,8 @@ export const ConfigTokenModal = ({
 			open={open}
 			onCancel={onClose}
 			onOk={handleOk}
-			okText="确认添加"
-			cancelText="关闭窗口"
+			okText="Confirm"
+			cancelText="Close"
 			confirmLoading={submitting}
 			okButtonProps={{
 				disabled: quotaMode === "custom" && (quota === null || quota <= 0),
@@ -68,15 +69,15 @@ export const ConfigTokenModal = ({
 		>
 			<div className="space-y-4 py-2">
 				<div className="flex items-center gap-2">
-					<span className="text-sm text-[var(--foreground)] min-w-[80px]">目标</span>
+					<span className="text-sm text-[var(--foreground)] min-w-[80px]">Target</span>
 					<span className="font-medium">{targetName}</span>
 				</div>
 
 				<div>
-					<div className="text-sm text-[var(--foreground)] mb-2">操作Token配额</div>
+					<div className="text-sm text-[var(--foreground)] mb-2">Token Quota</div>
 					<Radio.Group value={quotaMode} onChange={(e) => setQuotaMode(e.target.value)}>
 						<Space direction="vertical" size="middle">
-							<Radio value="unlimited">不限制配额</Radio>
+							<Radio value="unlimited">Unlimited quota</Radio>
 							<Radio value="custom">
 								<Space>
 									<Select
@@ -85,13 +86,13 @@ export const ConfigTokenModal = ({
 										disabled={quotaMode !== "custom"}
 										style={{ width: 110 }}
 										options={[
-											{ label: "当月", value: "month" },
-											{ label: "当日", value: "day" },
-											{ label: "按天", value: "custom" },
+											{ label: "This Month", value: "month" },
+											{ label: "Today", value: "day" },
+											{ label: "Per Day", value: "custom" },
 										]}
 									/>
 									<InputNumber
-										placeholder="请输入配额数"
+										placeholder="Enter quota"
 										value={quota}
 										onChange={(val) => setQuota(val)}
 										disabled={quotaMode !== "custom"}

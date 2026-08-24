@@ -37,50 +37,50 @@ export const ConversationDetailModal = ({
 
 	const columns = useMemo<ColumnsType<ConversationDetailRecord>>(
 		() => [
-			{ title: "对话ID", dataIndex: "dialogId", width: 160, align: "center" },
+			{ title: "Conversation ID", dataIndex: "dialogId", width: 160, align: "center" },
 			{ title: "Model", dataIndex: "model", width: 100, align: "center" },
 			{ title: "Agent", dataIndex: "agent", width: 120, align: "center" },
 			{
-				title: "对话标题",
+				title: "Title",
 				dataIndex: "dialogTitle",
 				width: 130,
 				align: "center",
 			},
 			{
-				title: "开始时间",
+				title: "Start Time",
 				dataIndex: "startTime",
 				width: 155,
 				align: "center",
 			},
-			{ title: "结束时间", dataIndex: "endTime", width: 155, align: "center" },
-			{ title: "对话时长", dataIndex: "duration", width: 100, align: "center" },
+			{ title: "End Time", dataIndex: "endTime", width: 155, align: "center" },
+			{ title: "Duration", dataIndex: "duration", width: 100, align: "center" },
 			{
-				title: "消耗token",
+				title: "Tokens",
 				dataIndex: "consumeToken",
 				width: 100,
 				align: "center",
 				render: (v: number) => v.toLocaleString(),
 			},
 			{
-				title: "用户满意度",
+				title: "Satisfaction",
 				dataIndex: "userSatisfaction",
 				width: 100,
 				align: "center",
 			},
 			{
-				title: "触发违禁词次数",
+				title: "Banned Word Triggers",
 				dataIndex: "bannedWordTriggerCount",
 				width: 120,
 				align: "center",
 			},
 			{
-				title: "操作",
+				title: "Actions",
 				width: 120,
 				align: "center",
 				fixed: "right",
 				render: (_: unknown, record: ConversationDetailRecord) => (
 					<Button type="link" className="p-0" onClick={() => handleViewDetail(record.dialogId)}>
-						查看对话详情
+						View Details
 					</Button>
 				),
 			},
@@ -89,7 +89,7 @@ export const ConversationDetailModal = ({
 	);
 
 	return (
-		<Modal title={`查看对话明细 - ${userName}`} open={open} onCancel={onClose} footer={null} width={1200}>
+		<Modal title={`Conversation Details - ${userName}`} open={open} onCancel={onClose} footer={null} width={1200}>
 			<Table<ConversationDetailRecord>
 				columns={columns}
 				dataSource={data?.records}
@@ -98,7 +98,7 @@ export const ConversationDetailModal = ({
 				pagination={{
 					pageSize: 10,
 					total: data?.total,
-					showTotal: (total) => `共 ${total} 条数据`,
+					showTotal: (total) => `${total} records`,
 				}}
 				bordered
 				size="small"

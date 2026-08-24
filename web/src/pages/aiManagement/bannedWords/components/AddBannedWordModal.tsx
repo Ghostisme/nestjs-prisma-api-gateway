@@ -1,6 +1,6 @@
 import { App, Checkbox, Input, Modal, Radio, Space } from "antd";
 import { type JSX, useCallback, useState } from "react";
-import type { BannedWordCategory, RiskLevel } from "../../types";
+import { BANNED_WORD_CATEGORY_LABELS, type BannedWordCategory, type RiskLevel, RISK_LEVEL_LABELS } from "../../types";
 import aiManagementService from "@/api/services/aiManagementService";
 import { getApiErrorMessage } from "@/utils/request-error";
 
@@ -37,7 +37,7 @@ export const AddBannedWordModal = ({ open, onClose, onSuccess }: AddBannedWordMo
 
 	const handleSubmit = useCallback(async () => {
 		if (!word.trim()) {
-			message.warning("请输入违禁词");
+			message.warning("Please enter a banned word");
 			return;
 		}
 		setLoading(true);
@@ -49,12 +49,12 @@ export const AddBannedWordModal = ({ open, onClose, onSuccess }: AddBannedWordMo
 				triggerMode,
 				matchMode,
 			});
-			message.success("添加成功");
+			message.success("Added successfully");
 			setWord("");
 			onSuccess();
 			onClose();
 		} catch (error) {
-			message.error(getApiErrorMessage(error, "添加失败"));
+			message.error(getApiErrorMessage(error, "Failed to add"));
 		} finally {
 			setLoading(false);
 		}
@@ -62,23 +62,23 @@ export const AddBannedWordModal = ({ open, onClose, onSuccess }: AddBannedWordMo
 
 	return (
 		<Modal
-			title="添加违禁词"
+			title="Add Banned Word"
 			open={open}
 			onCancel={onClose}
-			okText="确认添加"
-			cancelText="关闭窗口"
+			okText="Add"
+			cancelText="Close"
 			onOk={handleSubmit}
 			confirmLoading={loading}
 			width={600}
 		>
 			<div className="space-y-5 py-2">
 				<div>
-					<div className="text-sm font-medium text-[var(--foreground)] mb-2">请选择违禁词类型</div>
+					<div className="text-sm font-medium text-[var(--foreground)] mb-2">Select category</div>
 					<Radio.Group value={category} onChange={(e) => setCategory(e.target.value)}>
 						<Space wrap>
 							{CATEGORY_OPTIONS.map((cat) => (
 								<Radio key={cat} value={cat}>
-									{cat}
+									{BANNED_WORD_CATEGORY_LABELS[cat] ?? cat}
 								</Radio>
 							))}
 						</Space>
@@ -90,7 +90,7 @@ export const AddBannedWordModal = ({ open, onClose, onSuccess }: AddBannedWordMo
 						<Space>
 							{RISK_OPTIONS.map((risk) => (
 								<Radio key={risk} value={risk}>
-									{risk}
+									{RISK_LEVEL_LABELS[risk] ?? risk}
 								</Radio>
 							))}
 						</Space>
@@ -98,32 +98,32 @@ export const AddBannedWordModal = ({ open, onClose, onSuccess }: AddBannedWordMo
 				</div>
 
 				<div>
-					<div className="text-sm font-medium text-[var(--foreground)] mb-2">请输入违禁词</div>
-					<Input placeholder="最多输入20个字符" value={word} onChange={(e) => setWord(e.target.value)} maxLength={20} />
+					<div className="text-sm font-medium text-[var(--foreground)] mb-2">Enter banned word</div>
+					<Input placeholder="Up to 20 characters" value={word} onChange={(e) => setWord(e.target.value)} maxLength={20} />
 				</div>
 
 				<div>
-					<div className="text-sm font-medium text-[var(--foreground)] mb-2">触发方式</div>
+					<div className="text-sm font-medium text-[var(--foreground)] mb-2">Trigger Mode</div>
 					<Checkbox.Group
 						value={triggerMode}
 						onChange={(val) => setTriggerMode(val as string[])}
 						options={[
-							{ label: "输入违禁", value: "input" },
-							{ label: "输出违禁", value: "output" },
+							{ label: "Input", value: "input" },
+							{ label: "Output", value: "output" },
 						]}
 					/>
 				</div>
 
 				<div>
-					<div className="text-sm font-medium text-[var(--foreground)] mb-2">匹配方式</div>
+					<div className="text-sm font-medium text-[var(--foreground)] mb-2">Match Mode</div>
 					<Checkbox.Group
 						value={matchMode}
 						onChange={(val) => setMatchMode(val as string[])}
 						options={[
-							{ label: "精确匹配", value: "exact" },
-							{ label: "模糊匹配", value: "fuzzy" },
-							{ label: "语义理解", value: "semantic" },
-							{ label: "模型识别", value: "model" },
+							{ label: "Exact", value: "exact" },
+							{ label: "Fuzzy", value: "fuzzy" },
+							{ label: "Semantic", value: "semantic" },
+							{ label: "Model", value: "model" },
 						]}
 					/>
 				</div>

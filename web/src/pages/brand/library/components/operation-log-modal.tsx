@@ -35,13 +35,13 @@ export const OperationLogModal = ({ open, onCancel, brandId }: OperationLogModal
 				fields: [
 					{
 						name: "createByName",
-						label: "操作人",
+						label: "Operator",
 						type: "input",
-						placeholder: "请输入操作人",
+						placeholder: "Enter operator",
 					},
 					{
 						name: "createTime",
-						label: "操作时间",
+						label: "Time",
 						type: "daterange",
 						submitAs: { start: "startTime", end: "endTime" },
 						props: { format: "YYYY-MM-DD HH:mm:ss", showTime: true },
@@ -50,15 +50,15 @@ export const OperationLogModal = ({ open, onCancel, brandId }: OperationLogModal
 			},
 			columns: [
 				{
-					title: "操作人",
+					title: "Operator",
 					dataIndex: "createByName",
 				},
 				{
-					title: "操作时间",
+					title: "Time",
 					dataIndex: "createTime",
 				},
 				{
-					title: "操作内容",
+					title: "Action",
 					dataIndex: "operationContent",
 				},
 			],
@@ -66,7 +66,7 @@ export const OperationLogModal = ({ open, onCancel, brandId }: OperationLogModal
 				showQuickJumper: false,
 				showSizeChanger: false,
 				pageSize: 10,
-				showTotal: (total) => `共 ${total} 条数据`,
+				showTotal: (total) => `${total} records`,
 			},
 		}),
 		[brandId],

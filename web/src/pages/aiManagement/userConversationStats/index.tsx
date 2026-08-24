@@ -55,7 +55,7 @@ export default function UserConversationStatsPage(): JSX.Element {
 		if (!stats) return [];
 		return stats.map((s: { modelName: string; totalConversations: number }) => ({
 			modelName: s.modelName,
-			label: `${s.modelName}总对话数`,
+			label: `${s.modelName} Total Conversations`,
 			value: s.totalConversations,
 		}));
 	}, [stats]);
@@ -63,42 +63,42 @@ export default function UserConversationStatsPage(): JSX.Element {
 	const columns = useMemo<ColumnsType<UserConversationRecord>>(
 		() => [
 			{ title: "ID", dataIndex: "id", width: 60, align: "center" },
-			{ title: "姓名", dataIndex: "name", width: 100, align: "center" },
+			{ title: "Name", dataIndex: "name", width: 100, align: "center" },
 			{
-				title: "所属部门",
+				title: "Department",
 				dataIndex: "department",
 				width: 180,
 				align: "center",
 				render: (v: string) => v || "-",
 			},
 			{
-				title: "对话次数",
+				title: "Conversations",
 				dataIndex: "conversationCount",
 				width: 100,
 				align: "center",
 				sorter: (a, b) => a.conversationCount - b.conversationCount,
 			},
 			{
-				title: "用户满意度",
+				title: "Satisfaction",
 				dataIndex: "userSatisfaction",
 				width: 100,
 				align: "center",
 			},
 			{
-				title: "最近对话时间",
+				title: "Last Conversation",
 				dataIndex: "lastConversationTime",
 				width: 170,
 				align: "center",
 			},
 			{
-				title: "操作",
+				title: "Actions",
 				width: 140,
 				align: "center",
 				fixed: "right",
 				render: (_: unknown, record: UserConversationRecord) => (
 					<AuthGuard check={LMX_ADMIN_PERMISSIONS.aiManagement_userConversationStats_viewDetail}>
 						<Button type="link" className="p-0" onClick={() => handleOpenDetail(record)}>
-							查看对话明细
+							View Details
 						</Button>
 					</AuthGuard>
 				),
@@ -127,9 +127,9 @@ export default function UserConversationStatsPage(): JSX.Element {
 				<div className="rounded-xl bg-[var(--card)] p-5 shadow-sm border border-[var(--border)]">
 					<div className="flex flex-wrap items-center gap-3 mb-4">
 						<div className="flex items-center gap-1">
-							<span className="text-sm shrink-0">姓名</span>
+							<span className="text-sm shrink-0">Name</span>
 							<Input
-								placeholder="请输入"
+								placeholder="Enter"
 								className="w-28"
 								size="middle"
 								value={filterName}
@@ -138,9 +138,9 @@ export default function UserConversationStatsPage(): JSX.Element {
 							/>
 						</div>
 						<div className="flex items-center gap-1">
-							<span className="text-sm shrink-0">所属部门</span>
+							<span className="text-sm shrink-0">Department</span>
 							<Input
-								placeholder="请输入"
+								placeholder="Enter"
 								className="w-28"
 								size="middle"
 								value={filterDept}
@@ -158,7 +158,7 @@ export default function UserConversationStatsPage(): JSX.Element {
 								}`}
 								onClick={() => setStatusFilter("completed")}
 							>
-								已完
+								Completed
 							</button>
 							<button
 								type="button"
@@ -169,14 +169,14 @@ export default function UserConversationStatsPage(): JSX.Element {
 								}`}
 								onClick={() => setStatusFilter("incomplete")}
 							>
-								未完
+								Incomplete
 							</button>
 						</div>
 						<div className="flex items-center gap-1 ml-auto">
 							<Button type="primary" onClick={handleSearch}>
-								查询
+								Search
 							</Button>
-							<Button onClick={handleReset}>重置</Button>
+							<Button onClick={handleReset}>Reset</Button>
 						</div>
 					</div>
 
@@ -187,7 +187,7 @@ export default function UserConversationStatsPage(): JSX.Element {
 						pagination={{
 							pageSize: 10,
 							total: userList?.total,
-							showTotal: (total) => `共 ${total} 条数据`,
+							showTotal: (total) => `${total} records`,
 						}}
 						bordered
 						size="middle"

@@ -48,7 +48,7 @@ export function VideoInfo({ row, fileHost, isShowReason = false, coverExtra, chi
 	const isRevisionPending = row.status === "revision_pending_review";
 	const displayName = isRevisionPending ? (row?.auditingInfo?.name ?? row.name) : row.name;
 	const createTimeStr = row.createdTime ? dayjs(row.createdTime).format("YYYY-MM-DD HH:mm:ss") : "";
-	const uploadDesc = `${row.createdUserName ?? ""} 于 ${createTimeStr} 上传`;
+	const uploadDesc = `Uploaded by ${row.createdUserName ?? ""} on ${createTimeStr}`;
 	const brandLogo = buildMaterialFileUrl(fileHost, row.brandLogoUrl);
 	const carText = row.carModelInfo
 		? [row.carModelInfo.brandName, row.carModelInfo.subBrandName, row.carModelInfo.seriesName, row.carModelInfo.carName]
@@ -68,7 +68,7 @@ export function VideoInfo({ row, fileHost, isShowReason = false, coverExtra, chi
 						setPlayVisible(true);
 					}
 				}}
-				aria-label="播放视频"
+				aria-label="Play video"
 			>
 				<img src={coverUrl || ""} alt="" className="block h-full w-full object-cover" />
 				<div
@@ -116,7 +116,7 @@ export function VideoInfo({ row, fileHost, isShowReason = false, coverExtra, chi
 					</span>
 				</div>
 				{row.reason != null && row.reason !== "" && isShowReason ? (
-					<div className="w-full truncate text-[#f53f3f]">原因: {row.reason}</div>
+					<div className="w-full truncate text-[#f53f3f]">Reason: {row.reason}</div>
 				) : null}
 				{children}
 			</div>

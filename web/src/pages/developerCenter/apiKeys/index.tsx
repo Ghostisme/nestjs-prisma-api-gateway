@@ -21,19 +21,19 @@ export default function ApiKeysPage(): JSX.Element {
 	const revokeMutation = useMutation({
 		mutationFn: (id: number) => apiKeyService.revoke(id),
 		onSuccess: () => {
-			message.success("已撤销");
+			message.success("Revoked");
 			queryClient.invalidateQueries({ queryKey: ["api-keys"] });
 		},
-		onError: (error) => message.error(getApiErrorMessage(error, "撤销失败")),
+		onError: (error) => message.error(getApiErrorMessage(error, "Revoke failed")),
 	});
 
 	const deleteMutation = useMutation({
 		mutationFn: (id: number) => apiKeyService.remove(id),
 		onSuccess: () => {
-			message.success("已删除");
+			message.success("Deleted");
 			queryClient.invalidateQueries({ queryKey: ["api-keys"] });
 		},
-		onError: (error) => message.error(getApiErrorMessage(error, "删除失败")),
+		onError: (error) => message.error(getApiErrorMessage(error, "Delete failed")),
 	});
 
 	const handleCreateSubmit = useCallback(async (values: CreateApiKeyRequest): Promise<ApiKeyCreatedResponse> => {
@@ -47,9 +47,9 @@ export default function ApiKeysPage(): JSX.Element {
 	return (
 		<div className="space-y-4">
 			<div className="flex items-center justify-between">
-				<h2 className="text-lg font-semibold text-[var(--foreground)]">API Key 管理</h2>
+				<h2 className="text-lg font-semibold text-[var(--foreground)]">API Key Management</h2>
 				<Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateModalOpen(true)}>
-					创建 API Key
+					Create API Key
 				</Button>
 			</div>
 

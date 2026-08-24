@@ -36,13 +36,13 @@ export const ChatMessageList = ({ messages }: ChatMessageListProps): JSX.Element
 
 	const handleExport = useCallback(() => {
 		const text = messages
-			.map((m) => `[${m.timestamp}] ${m.role === "user" ? "用户" : "AI"}: ${extractText(m.content)}`)
+			.map((m) => `[${m.timestamp}] ${m.role === "user" ? "User" : "AI"}: ${extractText(m.content)}`)
 			.join("\n\n");
 		const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
 		const url = URL.createObjectURL(blob);
 		const a = document.createElement("a");
 		a.href = url;
-		a.download = "对话记录.txt";
+		a.download = "conversation.txt";
 		a.click();
 		URL.revokeObjectURL(url);
 	}, [messages]);
@@ -53,14 +53,14 @@ export const ChatMessageList = ({ messages }: ChatMessageListProps): JSX.Element
 			<div className="px-6 py-3 border-b border-[var(--border)] flex items-center justify-between">
 				<div className="flex items-center gap-2">
 					<div className="w-1 h-5 rounded-full" style={{ background: "var(--colors-palette-primary-default)" }} />
-					<h3 className="text-base font-bold text-[var(--foreground)]">对话内容</h3>
-					<span className="text-xs text-[var(--muted-foreground)] ml-1">共 {messages.length} 条消息</span>
+					<h3 className="text-base font-bold text-[var(--foreground)]">Conversation</h3>
+					<span className="text-xs text-[var(--muted-foreground)] ml-1">{messages.length} messages</span>
 				</div>
 
 				<div className="flex items-center gap-2">
 					{searchVisible && (
 						<Input
-							placeholder="搜索对话内容..."
+							placeholder="Search messages..."
 							value={searchText}
 							onChange={(e) => setSearchText(e.target.value)}
 							allowClear
@@ -69,7 +69,7 @@ export const ChatMessageList = ({ messages }: ChatMessageListProps): JSX.Element
 							size="small"
 						/>
 					)}
-					<Tooltip title="搜索对话内容">
+					<Tooltip title="Search messages">
 						<Button
 							type={searchVisible ? "primary" : "default"}
 							size="small"
@@ -79,12 +79,12 @@ export const ChatMessageList = ({ messages }: ChatMessageListProps): JSX.Element
 								if (searchVisible) setSearchText("");
 							}}
 						>
-							搜索对话内容
+							Search
 						</Button>
 					</Tooltip>
-					<Tooltip title="导出对话内容">
+					<Tooltip title="Export conversation">
 						<Button size="small" icon={<Icon icon="lucide:download" size={14} />} onClick={handleExport}>
-							导出对话内容
+							Export
 						</Button>
 					</Tooltip>
 				</div>
@@ -101,7 +101,7 @@ export const ChatMessageList = ({ messages }: ChatMessageListProps): JSX.Element
 				))}
 
 				{filteredMessages.length === 0 && searchText && (
-					<div className="text-center text-sm text-[var(--muted-foreground)] py-10">未找到匹配的对话内容</div>
+					<div className="text-center text-sm text-[var(--muted-foreground)] py-10">No matching messages</div>
 				)}
 			</div>
 		</div>
@@ -171,12 +171,12 @@ const ChatBubble = ({ message, searchText }: ChatBubbleProps): JSX.Element => {
 			<div className={`max-w-[75%] ${isUser ? "items-end" : "items-start"} flex flex-col gap-1`}>
 				{/* Meta */}
 				<div className={`flex items-center gap-2 ${isUser ? "flex-row-reverse" : "flex-row"}`}>
-					<span className="text-xs font-semibold text-[var(--foreground)]">{isUser ? "用户" : "AI"}</span>
+					<span className="text-xs font-semibold text-[var(--foreground)]">{isUser ? "User" : "AI"}</span>
 					<span className="text-[11px] text-[var(--muted-foreground)]">{message.timestamp}</span>
 					{message.isBannedContent && (
 						<span className="inline-flex items-center gap-0.5 text-[11px] font-medium text-[var(--colors-palette-error-default)]">
 							<Icon icon="lucide:shield-alert" size={12} />
-							违禁内容
+							Banned Content
 						</span>
 					)}
 				</div>

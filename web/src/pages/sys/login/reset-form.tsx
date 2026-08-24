@@ -24,9 +24,9 @@ function ResetForm() {
 			<Form {...form}>
 				<form onSubmit={form.handleSubmit(onFinish)} className="space-y-4">
 					<div className="flex flex-col items-center gap-2 text-center">
-						<h1 className="text-2xl font-bold">重置密码</h1>
+						<h1 className="text-2xl font-bold">Reset Password</h1>
 						<p className="text-balance text-sm text-muted-foreground">
-							请输入与您的帐户关联的电子邮件地址，我们将通过电子邮件向您发送重置密码的链接。
+							Enter the email address associated with your account and we'll send you a link to reset your password.
 						</p>
 					</div>
 
@@ -36,14 +36,14 @@ function ResetForm() {
 						render={({ field }) => (
 							<FormItem>
 								<FormControl>
-									<Input placeholder="邮箱" {...field} />
+									<Input placeholder="Email" {...field} />
 								</FormControl>
 								<FormMessage />
 							</FormItem>
 						)}
 					/>
 					<Button type="submit" className="w-full">
-						发送邮件
+						Send Email
 					</Button>
 					<ReturnButton onClick={backToLogin} />
 				</form>

@@ -18,8 +18,8 @@ const PASSWORD_MIN_LEN = 8;
 const PASSWORD_MAX_LEN = 15;
 const PHONE_REG = /^1[3-9]\d{9}$/;
 const USER_STATUS_OPTIONS = [
-	{ label: "启用", value: 1 },
-	{ label: "禁用", value: 0 },
+	{ label: "Enabled", value: 1 },
+	{ label: "Disabled", value: 0 },
 ];
 
 const normalizeOptionalString = (value: string | undefined): string | undefined => {
@@ -106,7 +106,7 @@ export default function PartnerUserFormModal({
 				});
 			} catch (error) {
 				if (isMounted) {
-					message.error(getApiErrorMessage(error, "获取企业账号详情失败"));
+					message.error(getApiErrorMessage(error, "Failed to load account details"));
 				}
 			} finally {
 				if (isMounted) {
@@ -131,7 +131,7 @@ export default function PartnerUserFormModal({
 
 	const onFinish = async (values: PartnerUserFormData): Promise<void> => {
 		if (partnerId === null) {
-			message.error("缺少合作企业ID");
+			message.error("Partner enterprise ID is missing");
 			return;
 		}
 
@@ -145,7 +145,7 @@ export default function PartnerUserFormModal({
 					status: values.status,
 					tenantId: partnerId,
 				});
-				message.success("编辑企业账号成功");
+				message.success("Account updated");
 			} else {
 				await createPartnerEnterpriseUser({
 					...values,
@@ -155,12 +155,12 @@ export default function PartnerUserFormModal({
 					username: values.username.trim(),
 					tenantId: partnerId,
 				});
-				message.success("创建企业账号成功");
+				message.success("Account created");
 			}
 			onOpenChange(false);
 			onSuccess?.();
 		} catch (error) {
-			message.error(getApiErrorMessage(error, isEditMode ? "编辑企业账号失败" : "创建企业账号失败"));
+			message.error(getApiErrorMessage(error, isEditMode ? "Failed to update account" : "Failed to create account"));
 		} finally {
 			setLoading(false);
 		}
@@ -180,15 +180,15 @@ export default function PartnerUserFormModal({
 				isViewMode
 					? [
 							<Button key="close" onClick={handleCloseModal}>
-								关闭
+								Close
 							</Button>,
 						]
 					: [
 							<Button key="cancel" onClick={handleCloseModal}>
-								取消
+								Cancel
 							</Button>,
 							<Button key="submit" type="primary" loading={loading} onClick={handleOk}>
-								确认
+								OK
 							</Button>,
 						]
 			}
@@ -203,7 +203,7 @@ export default function PartnerUserFormModal({
 				disabled={isViewMode || detailLoading}
 			>
 				{detailLoading && !isCreateMode ? (
-					<div className="py-8 text-center text-sm text-muted-foreground">加载中...</div>
+					<div className="py-8 text-center text-sm text-muted-foreground">Loading...</div>
 				) : (
 					<>
 						<Form.Item name="tenantId" hidden>
@@ -215,15 +215,15 @@ export default function PartnerUserFormModal({
 							label={
 								<span>
 									<Icon icon="ph:user" size={14} className="mr-1 align-middle" />
-									用户名
+									Username
 								</span>
 							}
 							rules={[
-								{ required: true, message: "请输入手机号" },
-								{ pattern: PHONE_REG, message: "请输入正确的11位手机号码" },
+								{ required: true, message: "Enter phone number" },
+								{ pattern: PHONE_REG, message: "Enter a valid 11-digit phone number" },
 							]}
 						>
-							<Input placeholder="请输入手机号" maxLength={11} showCount disabled={!isCreateMode} />
+							<Input placeholder="Enter phone number" maxLength={11} showCount disabled={!isCreateMode} />
 						</Form.Item>
 
 						{isCreateMode ? (
@@ -233,18 +233,18 @@ export default function PartnerUserFormModal({
 									label={
 										<span>
 											<Icon icon="ph:lock" size={14} className="mr-1 align-middle" />
-											密码
+											Password
 										</span>
 									}
 									rules={[
-										{ required: true, message: "请输入密码" },
+										{ required: true, message: "Enter password" },
 										{
 											validator(_, value) {
 												if (!value) return Promise.resolve();
 												if (value.length < PASSWORD_MIN_LEN || value.length > PASSWORD_MAX_LEN) {
 													return Promise.reject(
 														new Error(
-															`可输入英文、数字、符号，最少${PASSWORD_MIN_LEN}位数，最大${PASSWORD_MAX_LEN}位数`,
+															`Use letters, numbers, and symbols; ${PASSWORD_MIN_LEN}–${PASSWORD_MAX_LEN} characters`,
 														),
 													);
 												}
@@ -253,7 +253,7 @@ export default function PartnerUserFormModal({
 										},
 									]}
 								>
-									<Input.Password placeholder="可输入英文,数字,符号,最少8位数,最大15位数" autoComplete="new-password" />
+									<Input.Password placeholder="Use letters, numbers, and symbols; 8–15 characters" autoComplete="new-password" />
 								</Form.Item>
 
 								<Form.Item
@@ -261,21 +261,21 @@ export default function PartnerUserFormModal({
 									label={
 										<span>
 											<Icon icon="ph:key" size={14} className="mr-1 align-middle" />
-											确认密码
+											Confirm Password
 										</span>
 									}
 									dependencies={["password"]}
 									rules={[
-										{ required: true, message: "请再次输入密码" },
+										{ required: true, message: "Enter password again" },
 										({ getFieldValue }) => ({
 											validator(_, value) {
 												if (!value || getFieldValue("password") === value) return Promise.resolve();
-												return Promise.reject(new Error("两次输入的密码不一致"));
+												return Promise.reject(new Error("Passwords do not match"));
 											},
 										}),
 									]}
 								>
-									<Input.Password placeholder="再次输入密码" autoComplete="new-password" />
+									<Input.Password placeholder="Enter password again" autoComplete="new-password" />
 								</Form.Item>
 							</>
 						) : null}
@@ -285,12 +285,12 @@ export default function PartnerUserFormModal({
 							label={
 								<span>
 									<Icon icon="ph:envelope-simple" size={14} className="mr-1 align-middle" />
-									联系邮箱
+									Email
 								</span>
 							}
-							rules={[{ type: "email", message: "请输入有效的邮箱地址" }]}
+							rules={[{ type: "email", message: "Enter a valid email address" }]}
 						>
-							<Input placeholder="请输入联系邮箱地址" />
+							<Input placeholder="Enter email address" />
 						</Form.Item>
 
 						<Form.Item
@@ -298,22 +298,22 @@ export default function PartnerUserFormModal({
 							label={
 								<span>
 									<Icon icon="ph:phone" size={14} className="mr-1 align-middle" />
-									联系电话
+									Phone
 								</span>
 							}
 							rules={[
-								{ required: isCreateMode, message: "请输入联系电话号码" },
+								{ required: isCreateMode, message: "Enter phone number" },
 								{
 									validator(_, value) {
 										if (!value || PHONE_REG.test(value)) {
 											return Promise.resolve();
 										}
-										return Promise.reject(new Error("请输入正确的11位手机号码"));
+										return Promise.reject(new Error("Enter a valid 11-digit phone number"));
 									},
 								},
 							]}
 						>
-							<Input placeholder="请输入联系电话号码" showCount maxLength={11} />
+							<Input placeholder="Enter phone number" showCount maxLength={11} />
 						</Form.Item>
 
 						<Form.Item
@@ -321,23 +321,23 @@ export default function PartnerUserFormModal({
 							label={
 								<span>
 									<Icon icon="ph:user-circle" size={14} className="mr-1 align-middle" />
-									姓名
+									Name
 								</span>
 							}
-							rules={[{ required: true, message: "请输入注册人姓名" }]}
+							rules={[{ required: true, message: "Enter the registrant's name" }]}
 						>
-							<Input placeholder="请输入注册人姓名" showCount maxLength={50} />
+							<Input placeholder="Enter the registrant's name" showCount maxLength={50} />
 						</Form.Item>
 
 						<Form.Item
 							label={
 								<span>
 									<Icon icon="ph:identification-badge" size={14} className="mr-1 align-middle" />
-									选择角色
+									Role
 								</span>
 							}
 						>
-							<Input value="超级管理员" disabled />
+							<Input value="Super Admin" disabled />
 						</Form.Item>
 
 						<Form.Item
@@ -345,10 +345,10 @@ export default function PartnerUserFormModal({
 							label={
 								<span>
 									<Icon icon="ph:info" size={14} className="mr-1 align-middle" />
-									用户状态
+									Status
 								</span>
 							}
-							rules={[{ required: true, message: "请选择用户状态" }]}
+							rules={[{ required: true, message: "Select a status" }]}
 						>
 							<Radio.Group options={USER_STATUS_OPTIONS} />
 						</Form.Item>

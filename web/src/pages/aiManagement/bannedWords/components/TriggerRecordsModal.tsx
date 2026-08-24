@@ -4,7 +4,7 @@ import { type JSX, useCallback, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import aiManagementService from "@/api/services/aiManagementService";
 import { useRouter } from "@/routes/hooks";
-import type { BannedWordTriggerRecord } from "../../types";
+import { BANNED_WORD_CATEGORY_LABELS, type BannedWordTriggerRecord, INTERCEPT_STATUS_LABELS } from "../../types";
 
 interface TriggerRecordsModalProps {
 	open: boolean;
@@ -60,32 +60,33 @@ export const TriggerRecordsModal = ({
 
 	const columns = useMemo<ColumnsType<BannedWordTriggerRecord>>(
 		() => [
-			{ title: "姓名", dataIndex: "userName", width: 100, align: "center" },
+			{ title: "Name", dataIndex: "userName", width: 100, align: "center" },
 			{
-				title: "违禁词名称",
+				title: "Word",
 				dataIndex: "wordName",
 				width: 120,
 				align: "center",
 			},
 			{
-				title: "触发时间",
+				title: "Trigger Time",
 				dataIndex: "triggerTime",
 				width: 165,
 				align: "center",
 			},
 			{
-				title: "拦截状态",
+				title: "Intercept Status",
 				dataIndex: "interceptStatus",
 				width: 100,
 				align: "center",
+				render: (v: string) => INTERCEPT_STATUS_LABELS[v] ?? v,
 			},
 			{
-				title: "操作",
+				title: "Actions",
 				width: 150,
 				align: "center",
 				render: (_: unknown, record: BannedWordTriggerRecord) => (
 					<Button type="link" className="p-0" onClick={() => handleViewConversation(record)}>
-						查看对话详情
+						View Conversation
 					</Button>
 				),
 			},
@@ -94,12 +95,18 @@ export const TriggerRecordsModal = ({
 	);
 
 	return (
-		<Modal title={`触发记录 - ${categoryName}`} open={open} onCancel={onClose} footer={null} width={800}>
+		<Modal
+			title={`Trigger Records - ${BANNED_WORD_CATEGORY_LABELS[categoryName] ?? categoryName}`}
+			open={open}
+			onCancel={onClose}
+			footer={null}
+			width={800}
+		>
 			<div className="flex flex-wrap items-center gap-3 mb-4">
 				<div className="flex items-center gap-1">
-					<span className="text-sm shrink-0">姓名</span>
+					<span className="text-sm shrink-0">Name</span>
 					<Input
-						placeholder="请输入"
+						placeholder="Enter"
 						className="w-24"
 						size="middle"
 						value={searchName}
@@ -108,9 +115,9 @@ export const TriggerRecordsModal = ({
 					/>
 				</div>
 				<div className="flex items-center gap-1">
-					<span className="text-sm shrink-0">违禁词名称</span>
+					<span className="text-sm shrink-0">Word</span>
 					<Input
-						placeholder="请输入"
+						placeholder="Enter"
 						className="w-24"
 						size="middle"
 						value={searchWord}
@@ -119,13 +126,13 @@ export const TriggerRecordsModal = ({
 					/>
 				</div>
 				<div className="flex items-center gap-1">
-					<span className="text-sm shrink-0">拦截状态</span>
+					<span className="text-sm shrink-0">Intercept Status</span>
 					<Select
-						placeholder="请选择"
+						placeholder="Select"
 						className="w-24"
 						options={[
-							{ label: "已拦截", value: "已拦截" },
-							{ label: "未拦截", value: "未拦截" },
+							{ label: "Intercepted", value: "已拦截" },
+							{ label: "Not Intercepted", value: "未拦截" },
 						]}
 						value={interceptFilter}
 						onChange={setInterceptFilter}
@@ -134,10 +141,10 @@ export const TriggerRecordsModal = ({
 				</div>
 				<Space className="ml-auto">
 					<Button type="primary" size="middle">
-						查询
+						Search
 					</Button>
 					<Button size="middle" onClick={handleReset}>
-						重置
+						Reset
 					</Button>
 				</Space>
 			</div>
@@ -150,7 +157,7 @@ export const TriggerRecordsModal = ({
 				pagination={{
 					pageSize: 10,
 					total: filteredRecords.length,
-					showTotal: (total) => `共 ${total} 条数据`,
+					showTotal: (total) => `${total} records`,
 				}}
 				bordered
 				size="small"

@@ -32,7 +32,7 @@ import ZoomScriptModal from "./zoomScriptModal";
 const onDownload = async ({ title, scriptContent }: Item) => {
 	const tableOpts = parseScriptContent(scriptContent);
 	const workbook = new ExcelJS.Workbook();
-	const sheet = workbook.addWorksheet("脚本");
+	const sheet = workbook.addWorksheet("Script");
 
 	sheet.addRow([tableOpts.title]);
 	sheet.mergeCells(1, 1, 1, tableOpts.columns.length);
@@ -196,15 +196,15 @@ export default ({ ids, delay, onChangeLoading, onChangeIds, loadHistoryCaseList 
 	const onSave = async ({ id }: Item) => {
 		try {
 			await adoptAiScriptApi(id);
-			toast.success("已加入脚本库");
+			toast.success("Added to script library");
 		} catch {
-			toast.error("加入脚本库失败");
+			toast.error("Failed to add to script library");
 		}
 	};
 	const onCopy = async ({ scriptContent, id }: Item) => {
 		// 必须先执行剪贴板复制，保持用户手势上下文
 		console.log(scriptContent, "scriptContent");
-		copyFn(scriptContent, "复制成功");
+		copyFn(scriptContent, "Copied successfully");
 		try {
 			await copyAiScriptApi(id);
 		} catch {
@@ -214,8 +214,8 @@ export default ({ ids, delay, onChangeLoading, onChangeIds, loadHistoryCaseList 
 	const onRefresh = async (id: number) => {
 		if (
 			await modal.confirm({
-				title: "提示",
-				content: "确认重新生成脚本案例吗？",
+				title: "Notice",
+				content: "Regenerate this script sample?",
 			})
 		) {
 			const newId = await getRegenerateScriptId(id);
@@ -226,7 +226,7 @@ export default ({ ids, delay, onChangeLoading, onChangeIds, loadHistoryCaseList 
 		let feedbackFlag = 0;
 		if (
 			await modal.confirm({
-				title: "反馈技术",
+				title: "Feedback",
 				content: (
 					<Radio.Group
 						defaultValue={feedbackFlag}
@@ -234,8 +234,8 @@ export default ({ ids, delay, onChangeLoading, onChangeIds, loadHistoryCaseList 
 							feedbackFlag = value;
 						}}
 					>
-						<Radio value={0}>满意</Radio>
-						<Radio value={1}>不满意</Radio>
+						<Radio value={0}>Satisfied</Radio>
+						<Radio value={1}>Not satisfied</Radio>
 					</Radio.Group>
 				),
 			})
@@ -245,9 +245,9 @@ export default ({ ids, delay, onChangeLoading, onChangeIds, loadHistoryCaseList 
 					caseId: id,
 					feedbackFlag,
 				});
-				message.success("反馈成功");
+				message.success("Feedback submitted");
 			} catch {
-				message.error("反馈失败，请稍后重试");
+				message.error("Feedback failed, please try again later");
 			}
 		}
 	};
@@ -271,19 +271,19 @@ export default ({ ids, delay, onChangeLoading, onChangeIds, loadHistoryCaseList 
 	};
 	const onSubmit = async () => {
 		if (!html) {
-			return toast.error("请输入脚本内容");
+			return toast.error("Please enter script content");
 		}
 		if (
 			await modal.confirm({
-				title: "提示",
-				content: "确认编辑脚本案例内容吗？",
+				title: "Notice",
+				content: "Confirm editing this script sample content?",
 			})
 		) {
 			const { id: caseId } = record as AiScriptDetailRes;
 			await editAiScriptContent({ caseId, scriptContent: html });
 			(list.find(({ id }) => id === caseId) as Item).scriptContent = html;
 			$refs.visible = false;
-			toast.success("修改成功");
+			toast.success("Updated successfully");
 		}
 	};
 	useEffect(() => {
@@ -310,7 +310,7 @@ export default ({ ids, delay, onChangeLoading, onChangeIds, loadHistoryCaseList 
 		return (
 			<div className={"flex-1 flex flex-col items-center justify-center text-[#86909C] text-[14px]"}>
 				<Icon icon="line-md:loading-loop" size={32} className="mb-4" />
-				加载历史数据中...
+				Loading history...
 			</div>
 		);
 	}
@@ -347,8 +347,8 @@ export default ({ ids, delay, onChangeLoading, onChangeIds, loadHistoryCaseList 
 			{!list.length && (
 				<Empty
 					icon={empty1}
-					title={"您暂时还没生成脚本哦!"}
-					description={"输入相关信息，AI秒出专业脚本，快来使用吧!"}
+					title={"You haven't generated any scripts yet!"}
+					description={"Enter your details and let AI produce professional scripts in seconds!"}
 				/>
 			)}
 			<EditModal
@@ -376,7 +376,7 @@ const LoadingContent = ({ index, title, progress }: LoadingContentProps) => (
 				"text-[16px] font-semibold bg-linear-to-r from-[#4C84FE] from-0% via-[#24F3F3] via-30% to-[#5CDCFF] to-100% bg-clip-text text-transparent"
 			}
 		>
-			脚本{index + 1}：{title}
+			Script {index + 1}: {title}
 		</div>
 		<div className={"flex items-center justify-between"}>
 			<div className={"text-[14px] text-[#86909C] flex items-center gap-[4px]"}>
@@ -399,7 +399,7 @@ const SuccessContent = ({ index, id, title, scriptContent, onUpdateScript }: Suc
 					"text-[16px] font-semibold bg-linear-to-r from-[#4C84FE] from-0% via-[#24F3F3] via-30% to-[#5CDCFF] to-100% bg-clip-text text-transparent flex items-center justify-between"
 				}
 			>
-				脚本{index + 1}：{title}
+				Script {index + 1}: {title}
 				<Icon
 					icon={flag ? "teenyicons:up-solid" : "teenyicons:down-solid"}
 					size={10}

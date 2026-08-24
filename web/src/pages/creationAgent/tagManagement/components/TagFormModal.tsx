@@ -49,7 +49,7 @@ export default function TagFormModal({ open, onOpenChange, initialData, onSucces
 		const subTagNames = values.subTagNames.map((s) => s.trim()).filter(Boolean);
 
 		if (subTagNames.length === 0) {
-			message.warning("请输入至少一个标签内容");
+			message.warning("Enter at least one tag");
 			return;
 		}
 
@@ -64,15 +64,15 @@ export default function TagFormModal({ open, onOpenChange, initialData, onSucces
 			setLoading(true);
 			if (isEdit && initialData) {
 				await tagService.updateTag({ ...payload, id: initialData.id });
-				message.success("修改成功");
+				message.success("Updated");
 			} else {
 				await tagService.createTag(payload);
-				message.success("创建成功");
+				message.success("Created");
 			}
 			onOpenChange(false);
 			onSuccess?.();
 		} catch {
-			message.error(isEdit ? "修改失败" : "创建失败");
+			message.error(isEdit ? "Update failed" : "Create failed");
 		} finally {
 			setLoading(false);
 		}
@@ -80,17 +80,17 @@ export default function TagFormModal({ open, onOpenChange, initialData, onSucces
 
 	return (
 		<Modal
-			title={isEdit ? "编辑标签" : "新建标签"}
+			title={isEdit ? "Edit Tag" : "New Tag"}
 			open={open}
 			onCancel={() => onOpenChange(false)}
 			destroyOnHidden
 			width={520}
 			footer={[
 				<Button key="cancel" onClick={() => onOpenChange(false)}>
-					取消
+					Cancel
 				</Button>,
 				<Button key="submit" type="primary" loading={loading} onClick={handleOk}>
-					确定
+					OK
 				</Button>,
 			]}
 		>
@@ -105,7 +105,7 @@ export default function TagFormModal({ open, onOpenChange, initialData, onSucces
 				className="mt-6"
 			>
 				<div className="flex gap-4">
-					<Form.Item name="scopeType" label="应用范围" rules={[{ required: true, message: "请选择应用范围" }]}>
+					<Form.Item name="scopeType" label="Scope" rules={[{ required: true, message: "Select a scope" }]}>
 						<Radio.Group
 							options={SCOPE_TYPE_OPTIONS.map((opt) => ({
 								label: opt.label,
@@ -113,13 +113,13 @@ export default function TagFormModal({ open, onOpenChange, initialData, onSucces
 							}))}
 						/>
 					</Form.Item>
-					<Form.Item name="required" label="是否必填" valuePropName="checked">
+					<Form.Item name="required" label="Required" valuePropName="checked">
 						<Switch />
 					</Form.Item>
 				</div>
 
-				<Form.Item name="name" label="标签标题" rules={[requiredWithTrim("请输入标签标题")]}>
-					<Input placeholder="请输入标签标题" />
+				<Form.Item name="name" label="Tag Title" rules={[requiredWithTrim("Enter a tag title")]}>
+					<Input placeholder="Enter a tag title" />
 				</Form.Item>
 
 				{/* <Form.Item
@@ -135,13 +135,13 @@ export default function TagFormModal({ open, onOpenChange, initialData, onSucces
         </Form.Item> */}
 				<Form.Item
 					name="subTagNames"
-					label="标签内容"
-					rules={[{ required: true, message: "请输入标签内容" }]}
+					label="Tags"
+					rules={[{ required: true, message: "Enter tag content" }]}
 					validateTrigger="onChange"
 				>
 					<Select
 						mode="tags"
-						placeholder="输入后按回车添加标签"
+						placeholder="Type and press Enter to add a tag"
 						tokenSeparators={[",", "，"]}
 						open={false}
 						suffixIcon={null}

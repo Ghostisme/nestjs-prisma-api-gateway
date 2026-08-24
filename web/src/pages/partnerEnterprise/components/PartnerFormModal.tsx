@@ -357,9 +357,9 @@ interface PartnerFormModalProps {
 }
 
 const MODE_TITLE: Record<ModalMode, string> = {
-	create: "新建合作企业",
-	edit: "编辑合作企业",
-	view: "查看合作企业",
+	create: "Add Partner Enterprise",
+	edit: "Edit Partner Enterprise",
+	view: "View Partner Enterprise",
 };
 
 export default function PartnerFormModal({
@@ -508,7 +508,7 @@ export default function PartnerFormModal({
 					}
 				} catch (error) {
 					if (isMounted) {
-						message.error(getApiErrorMessage(error, "获取合作企业详情失败"));
+						message.error(getApiErrorMessage(error, "Failed to load partner enterprise details"));
 					}
 				} finally {
 					if (isMounted) {
@@ -765,7 +765,7 @@ export default function PartnerFormModal({
 
 				return {
 					key: nodeKey,
-					title: node.menuName ?? node.menuCode ?? "未命名菜单",
+					title: node.menuName ?? node.menuCode ?? "Unnamed menu",
 					children: childTreeNodes,
 				};
 			});
@@ -905,7 +905,7 @@ export default function PartnerFormModal({
 	);
 	const validateBackendModules = useCallback(async (): Promise<void> => {
 		if (filteredProductFunctions.length === 0) {
-			throw new Error("请先选择产品功能");
+			throw new Error("Please select a product feature first");
 		}
 
 		const unselectedProductLabels = filteredProductFunctions
@@ -913,7 +913,7 @@ export default function PartnerFormModal({
 			.map(getProductFunctionLabel);
 
 		if (unselectedProductLabels.length > 0) {
-			throw new Error(`请为${unselectedProductLabels.join("、")}至少选择一项后台功能`);
+			throw new Error(`Select at least one backend feature for ${unselectedProductLabels.join(", ")}`);
 		}
 	}, [filteredProductFunctions, selectedModulesByProduct]);
 
@@ -935,7 +935,7 @@ export default function PartnerFormModal({
 
 	const onFinish = async (values: PartnerEnterpriseFormData) => {
 		if (!isFiniteNumber(values.brandId)) {
-			message.error("请选择合作品牌");
+			message.error("Please select a partner brand");
 			return;
 		}
 
@@ -943,15 +943,20 @@ export default function PartnerFormModal({
 			setLoading(true);
 			if (mode === "edit" && partnerId) {
 				await updatePartnerEnterprise(mapFormValuesToUpdateRequest(partnerId, values, selectedModulesByProduct));
-				message.success("编辑合作企业成功");
+				message.success("Partner enterprise updated");
 			} else {
 				await createPartnerEnterprise(mapFormValuesToSaveRequest(values, selectedModulesByProduct));
-				message.success("新建合作企业成功");
+				message.success("Partner enterprise created");
 			}
 			handleCloseModal();
 			onSuccess?.();
 		} catch (error) {
-			message.error(getApiErrorMessage(error, mode === "edit" ? "编辑合作企业失败" : "新建合作企业失败"));
+			message.error(
+				getApiErrorMessage(
+					error,
+					mode === "edit" ? "Failed to update partner enterprise" : "Failed to create partner enterprise",
+				),
+			);
 		} finally {
 			setLoading(false);
 		}
@@ -971,21 +976,21 @@ export default function PartnerFormModal({
 				isViewMode
 					? [
 							<Button key="close" onClick={handleCloseModal}>
-								关闭
+								Close
 							</Button>,
 						]
 					: [
 							<Button key="cancel" onClick={handleCloseModal}>
-								取消
+								Cancel
 							</Button>,
 							<Button key="submit" type="primary" loading={loading} onClick={handleOk}>
-								确认
+								OK
 							</Button>,
 						]
 			}
 		>
 			{/* 只遮罩表单内容，不影响弹窗容器本身，方便统一承接编辑/查看态的初始化加载。 */}
-			<Spin spinning={initializingLoading} tip="加载中...">
+			<Spin spinning={initializingLoading} tip="Loading...">
 				<Form
 					form={form}
 					layout="horizontal"
@@ -1005,10 +1010,10 @@ export default function PartnerFormModal({
 						label={
 							<span>
 								<Icon icon="ph:star" size={14} className="mr-1 align-middle" />
-								选择合作品牌
+								Partner Brand
 							</span>
 						}
-						rules={[{ required: true, message: "请选择合作品牌" }]}
+						rules={[{ required: true, message: "Please select a partner brand" }]}
 					>
 						<BrandSelect queryEnabled={open} disabled={shouldDisableImmutableFields || initializingLoading} />
 					</Form.Item>
@@ -1018,12 +1023,12 @@ export default function PartnerFormModal({
 						label={
 							<span>
 								<Icon icon="ph:buildings" size={14} className="mr-1 align-middle" />
-								输入合作商名称
+								Partner Name
 							</span>
 						}
-						rules={[{ required: true, message: "请输入合作商名称" }]}
+						rules={[{ required: true, message: "Please enter the partner name" }]}
 					>
-						<Input placeholder="请输入" disabled={shouldDisableImmutableFields || initializingLoading} />
+						<Input placeholder="Enter…" disabled={shouldDisableImmutableFields || initializingLoading} />
 					</Form.Item>
 
 					<Form.Item
@@ -1031,11 +1036,11 @@ export default function PartnerFormModal({
 						label={
 							<span>
 								<Icon icon="ph:user" size={14} className="mr-1 align-middle" />
-								合作企业负责人
+								Contact Person
 							</span>
 						}
 					>
-						<Input placeholder="请输入" />
+						<Input placeholder="Enter…" />
 					</Form.Item>
 
 					<Form.Item
@@ -1043,12 +1048,12 @@ export default function PartnerFormModal({
 						label={
 							<span>
 								<Icon icon="ph:phone" size={14} className="mr-1 align-middle" />
-								负责人联系电话
+								Contact Phone
 							</span>
 						}
-						rules={[{ pattern: PHONE_REG, message: "请输入正确的11位手机号码" }]}
+						rules={[{ pattern: PHONE_REG, message: "Enter a valid 11-digit phone number" }]}
 					>
-						<Input placeholder="请输入" maxLength={11} />
+						<Input placeholder="Enter…" maxLength={11} />
 					</Form.Item>
 
 					<Form.Item
@@ -1056,10 +1061,10 @@ export default function PartnerFormModal({
 						label={
 							<span>
 								<Icon icon="ph:cube" size={14} className="mr-1 align-middle" />
-								请选择产品功能
+								Product Features
 							</span>
 						}
-						rules={[{ required: true, message: "请至少选择一项产品功能" }]}
+						rules={[{ required: true, message: "Select at least one product feature" }]}
 					>
 						<Checkbox.Group options={PARTNER_ENTERPRISE_PRODUCT_FUNCTION_OPTIONS} />
 					</Form.Item>
@@ -1069,7 +1074,7 @@ export default function PartnerFormModal({
 						label={
 							<span>
 								<Icon icon="ph:monitor" size={14} className="mr-1 align-middle" />
-								请选择后台功能
+								Backend Features
 							</span>
 						}
 						rules={[{ validator: validateBackendModules }]}
@@ -1084,13 +1089,13 @@ export default function PartnerFormModal({
 								/>
 							) : null}
 							{filteredProductFunctions.length === 0 ? (
-								<div className="py-8 text-center text-sm text-muted-foreground">请先选择产品功能</div>
+								<div className="py-8 text-center text-sm text-muted-foreground">Select a product feature first</div>
 							) : availableMenuTreeLoading ? (
-								<div className="py-8 text-center text-sm text-muted-foreground">菜单加载中...</div>
+								<div className="py-8 text-center text-sm text-muted-foreground">Loading menus...</div>
 							) : availableMenuTreeError ? (
-								<div className="py-8 text-center text-sm text-destructive">菜单加载失败</div>
+								<div className="py-8 text-center text-sm text-destructive">Failed to load menus</div>
 							) : currentTreeData.length === 0 ? (
-								<div className="py-8 text-center text-sm text-muted-foreground">暂无可选后台功能</div>
+								<div className="py-8 text-center text-sm text-muted-foreground">No backend features available</div>
 							) : (
 								<Tree<PartnerMenuTreeNode>
 									checkable
@@ -1110,14 +1115,14 @@ export default function PartnerFormModal({
 							label={
 								<span>
 									<Icon icon="ph:cpu" size={14} className="mr-1 align-middle" />
-									请选择AI功能
+									AI Features
 								</span>
 							}
 						>
 							<div className="space-y-2">
 								<Form.Item
 									name="aiCodeList"
-									rules={[{ required: true, message: "请至少选择一项AI功能" }]}
+									rules={[{ required: true, message: "Select at least one AI feature" }]}
 									preserve={false}
 									style={{ marginBottom: 0 }}
 								>
@@ -1133,11 +1138,11 @@ export default function PartnerFormModal({
 									/>
 								</Form.Item>
 								{availableAiCapabilityLoading ? (
-									<div className="text-sm text-muted-foreground">AI功能加载中...</div>
+									<div className="text-sm text-muted-foreground">Loading AI features...</div>
 								) : availableAiCapabilityError ? (
-									<div className="text-sm text-destructive">AI功能加载失败</div>
+									<div className="text-sm text-destructive">Failed to load AI features</div>
 								) : aiFunctionOptions.length === 0 ? (
-									<div className="text-sm text-muted-foreground">暂无可选AI功能</div>
+									<div className="text-sm text-muted-foreground">No AI features available</div>
 								) : null}
 							</div>
 						</Form.Item>
@@ -1148,7 +1153,7 @@ export default function PartnerFormModal({
 						label={
 							<span>
 								<Icon icon="ph:info" size={14} className="mr-1 align-middle" />
-								合作企业状态
+								Status
 							</span>
 						}
 						rules={[{ required: true }]}

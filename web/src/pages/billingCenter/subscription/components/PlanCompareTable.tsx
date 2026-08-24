@@ -14,7 +14,7 @@ export const PlanCompareTable = ({ plans, currentTier, loading, onSelect }: Plan
 	const columns = useMemo<ColumnsType<PlanConfig>>(
 		() => [
 			{
-				title: "套餐",
+				title: "Plan",
 				dataIndex: "name",
 				width: 140,
 				render: (name: string, record: PlanConfig) => (
@@ -25,7 +25,7 @@ export const PlanCompareTable = ({ plans, currentTier, loading, onSelect }: Plan
 				),
 			},
 			{
-				title: "等级",
+				title: "Tier",
 				dataIndex: "tier",
 				width: 100,
 				align: "center",
@@ -40,27 +40,27 @@ export const PlanCompareTable = ({ plans, currentTier, loading, onSelect }: Plan
 				},
 			},
 			{
-				title: "月费（元）",
+				title: "Monthly Price (¥)",
 				dataIndex: "priceMonthly",
 				width: 120,
 				align: "right",
-				render: (v: number) => (v === 0 ? "免费" : `¥${v.toLocaleString()}`),
+				render: (v: number) => (v === 0 ? "Free" : `¥${v.toLocaleString()}`),
 			},
 			{
-				title: "月 Token 限额",
+				title: "Monthly Token Limit",
 				dataIndex: "tokenLimitMonthly",
 				width: 140,
 				align: "right",
-				render: (v: number) => (v === -1 ? "无限制" : v.toLocaleString()),
+				render: (v: number) => (v === -1 ? "Unlimited" : v.toLocaleString()),
 			},
 			{
-				title: "并发限制",
+				title: "Concurrency Limit",
 				dataIndex: "concurrentLimit",
 				width: 100,
 				align: "center",
 			},
 			{
-				title: "包含功能",
+				title: "Features",
 				dataIndex: "features",
 				width: 260,
 				render: (features: string[]) => (
@@ -74,7 +74,7 @@ export const PlanCompareTable = ({ plans, currentTier, loading, onSelect }: Plan
 				),
 			},
 			{
-				title: "操作",
+				title: "Actions",
 				width: 120,
 				align: "center",
 				fixed: "right",
@@ -83,13 +83,13 @@ export const PlanCompareTable = ({ plans, currentTier, loading, onSelect }: Plan
 					if (isCurrent) {
 						return (
 							<Tag color="green" className="m-0">
-								当前套餐
+								Current Plan
 							</Tag>
 						);
 					}
 					return (
 						<Button type="primary" size="small" onClick={() => onSelect(record)}>
-							选择
+							Select
 						</Button>
 					);
 				},

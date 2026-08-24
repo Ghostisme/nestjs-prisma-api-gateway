@@ -29,10 +29,10 @@ export default function ConversationViewPage(): JSX.Element {
 						onClick={() => router.back()}
 						className="flex items-center gap-1 text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
 					>
-						返回
+						Back
 					</Button>
 					<div className="h-4 w-px bg-[var(--border)]" />
-					<h2 className="text-lg font-bold text-[var(--foreground)]">对话详情</h2>
+					<h2 className="text-lg font-bold text-[var(--foreground)]">Conversation Details</h2>
 					{data?.info.dialogTitle && (
 						<span className="text-sm text-[var(--muted-foreground)]">— {data.info.dialogTitle}</span>
 					)}

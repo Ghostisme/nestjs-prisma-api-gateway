@@ -68,18 +68,18 @@ function MobileForm() {
 		<Form {...form}>
 			<form onSubmit={form.handleSubmit(onFinish)} className="space-y-4">
 				<div className="flex flex-col items-center gap-2 text-center">
-					<h1 className="text-2xl font-bold">手机登录</h1>
+					<h1 className="text-2xl font-bold">Mobile Login</h1>
 				</div>
 
 				<FormField
 					control={form.control}
 					name="phone"
-					rules={{ required: "请输入手机号码" }}
+					rules={{ required: "Enter your phone number" }}
 					render={({ field }) => (
 						<FormItem>
-							<FormLabel>手机号码</FormLabel>
+							<FormLabel>Phone number</FormLabel>
 							<FormControl>
-								<Input placeholder="手机号码" {...field} />
+								<Input placeholder="Phone number" {...field} />
 							</FormControl>
 							<FormMessage />
 						</FormItem>
@@ -89,14 +89,14 @@ function MobileForm() {
 				<FormField
 					control={form.control}
 					name="code"
-					rules={{ required: "请输入验证码" }}
+					rules={{ required: "Enter the code" }}
 					render={({ field }) => (
 						<FormItem>
 							<FormLabel className="flex items-center justify-between">
-								<span className="text-sm">短信验证码</span>
+								<span className="text-sm">SMS Code</span>
 								<span className="text-sm text-muted-foreground" onClick={start}>
 									{countdown === 0 ? (
-										<span>发送验证码</span>
+										<span>Send Code</span>
 									) : (
 										<div className="flex items-center justify-center">
 											<Countdown
@@ -107,7 +107,7 @@ function MobileForm() {
 												}}
 												onFinish={reset}
 											/>
-											<span className="ml-1">{`${second}秒后重试`}</span>
+											<span className="ml-1">{`Retry in ${second}s`}</span>
 										</div>
 									)}
 								</span>
@@ -136,7 +136,7 @@ function MobileForm() {
 				/>
 
 				<Button type="submit" className="w-full">
-					登录
+					Sign in
 				</Button>
 
 				<ReturnButton

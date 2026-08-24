@@ -10,9 +10,9 @@ import { useRequestFileHost } from "@/store/appStore";
 import { getDisplayStatus } from "@/utils/materialStatus";
 
 const UPLOAD_CENTER_TABS = [
-	{ label: "全部", value: "" },
-	{ label: "审核中的素材", value: "marking_review_in_progress,re_review_rejected" },
-	{ label: "素材修正", value: "revision_pending_review" },
+	{ label: "All", value: "" },
+	{ label: "Under Review", value: "marking_review_in_progress,re_review_rejected" },
+	{ label: "Revision", value: "revision_pending_review" },
 ] as const;
 
 const DEFAULT_PAGE_SIZE = 20;
@@ -78,11 +78,11 @@ export function UploadCenter() {
 				icon={<Icon icon="line-md:upload" />}
 				onClick={handleOpen}
 			>
-				上传中心
+				Upload Center
 			</Button>
 
 			<Modal
-				title="上传中心"
+				title="Upload Center"
 				open={open}
 				onCancel={handleClose}
 				width={"50%"}
@@ -90,10 +90,10 @@ export function UploadCenter() {
 				destroyOnHidden
 				footer={[
 					<Button key="cancel" onClick={handleClose}>
-						取消
+						Cancel
 					</Button>,
 					<Button key="ok" type="primary" onClick={handleClose}>
-						确认
+						OK
 					</Button>,
 				]}
 			>
@@ -128,7 +128,7 @@ export function UploadCenter() {
 													<div className="flex h-full flex-col items-end justify-end">
 														{item.status === "re_review_rejected" && (
 															<Button size="small" onClick={() => handleReapply(item)}>
-																重新申请
+																Reapply
 															</Button>
 														)}
 													</div>
@@ -138,7 +138,7 @@ export function UploadCenter() {
 									})}
 								</div>
 							) : (
-								<Empty description="暂无数据" className="py-12" />
+								<Empty description="No data" className="py-12" />
 							)}
 						</div>
 						{loading && (
@@ -149,7 +149,7 @@ export function UploadCenter() {
 					</div>
 
 					<div className="mt-3 flex shrink-0 items-center justify-between border-t pt-3">
-						<span className="text-xs text-[#8c8c8c]">共 {total} 条</span>
+						<span className="text-xs text-[#8c8c8c]">{total} total</span>
 						<Pagination
 							size="small"
 							current={page}

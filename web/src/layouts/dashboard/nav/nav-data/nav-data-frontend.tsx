@@ -76,71 +76,73 @@ export const frontendNavData: NavProps["data"] = [
 			},
 		],
 	},
-	{
-		items: [
-			{
-				title: "Account Management",
-				path: "sys-account-management",
-				icon: <Icon icon="local:ic-setting" size="24" />,
-				children: [
-					{
-						title: "User Management",
-						path: "sys-account-management/user-management",
-						auth: [LMX_ADMIN_PERMISSIONS.user_read],
-					},
-					{
-						title: "Role Management",
-						path: "sys-account-management/role-management",
-						auth: [LMX_ADMIN_PERMISSIONS.role_read],
-					},
-					{
-						title: "Department Management",
-						path: "sys-account-management/department-management",
-						auth: [LMX_ADMIN_PERMISSIONS.dept_read],
-					},
-				],
-			},
-		],
-	},
-	{
-		items: [
-			{
-				title: "Partner Enterprises",
-				path: "/partner-enterprise",
-				icon: <Icon icon="local:ic-setting" size="24" />,
-				children: [
-					{
-						title: "Partner Enterprises",
-						path: "/partner-enterprise/management",
-						auth: [LMX_ADMIN_PERMISSIONS.partner_read],
-					},
-				],
-			},
-		],
-	},
-	{
-		items: [
-			{
-				title: "Creation Studio",
-				path: "/creation-agent",
-				icon: <Icon icon="local:ic-analysis" size="24" />,
-				children: [
-					{
-						title: "Material Center",
-						path: "/creation-agent/material-center",
-					},
-					{
-						title: "Tag Management",
-						path: "/creation-agent/tag-management",
-					},
-					{
-						title: "Car Models",
-						path: "/creation-agent/car-model-management",
-					},
-				],
-			},
-		],
-	},
+	// Demo-only: hide Java-gateway /admin/* and /xdwx-material/* pages.
+	// Keep the page files; they are not wired into this NestJS BFF demo.
+	// {
+	// 	items: [
+	// 		{
+	// 			title: "Account Management",
+	// 			path: "sys-account-management",
+	// 			icon: <Icon icon="local:ic-setting" size="24" />,
+	// 			children: [
+	// 				{
+	// 					title: "User Management",
+	// 					path: "sys-account-management/user-management",
+	// 					auth: [LMX_ADMIN_PERMISSIONS.user_read],
+	// 				},
+	// 				{
+	// 					title: "Role Management",
+	// 					path: "sys-account-management/role-management",
+	// 					auth: [LMX_ADMIN_PERMISSIONS.role_read],
+	// 				},
+	// 				{
+	// 					title: "Department Management",
+	// 					path: "sys-account-management/department-management",
+	// 					auth: [LMX_ADMIN_PERMISSIONS.dept_read],
+	// 				},
+	// 			],
+	// 		},
+	// 	],
+	// },
+	// {
+	// 	items: [
+	// 		{
+	// 			title: "Partner Enterprises",
+	// 			path: "/partner-enterprise",
+	// 			icon: <Icon icon="local:ic-setting" size="24" />,
+	// 			children: [
+	// 				{
+	// 					title: "Partner Enterprises",
+	// 					path: "/partner-enterprise/management",
+	// 					auth: [LMX_ADMIN_PERMISSIONS.partner_read],
+	// 				},
+	// 			],
+	// 		},
+	// 	],
+	// },
+	// {
+	// 	items: [
+	// 		{
+	// 			title: "Creation Studio",
+	// 			path: "/creation-agent",
+	// 			icon: <Icon icon="local:ic-analysis" size="24" />,
+	// 			children: [
+	// 				{
+	// 					title: "Material Center",
+	// 					path: "/creation-agent/material-center",
+	// 				},
+	// 				{
+	// 					title: "Tag Management",
+	// 					path: "/creation-agent/tag-management",
+	// 				},
+	// 				{
+	// 					title: "Car Models",
+	// 					path: "/creation-agent/car-model-management",
+	// 				},
+	// 			],
+	// 		},
+	// 	],
+	// },
 	// {
 	// 	items: [
 	// 		{

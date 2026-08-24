@@ -8,7 +8,7 @@ import bffClient from "@/api/bffClient";
 import { ChartCard, DashboardFilterBar } from "@/pages/aiDashboard/components";
 import type { DashboardFilter } from "@/pages/aiDashboard/types";
 import aiManagementService from "@/api/services/aiManagementService";
-import type { BannedWordCategoryRecord } from "../types";
+import { BANNED_WORD_CATEGORY_LABELS, type BannedWordCategoryRecord, RISK_LEVEL_LABELS } from "../types";
 import { AddBannedWordModal } from "./components/AddBannedWordModal";
 import { BannedWordListModal } from "./components/BannedWordListModal";
 import { TriggerRecordsModal } from "./components/TriggerRecordsModal";
@@ -71,7 +71,7 @@ export default function BannedWordsPage(): JSX.Element {
 
 	const pieOptions = useChart({
 		chart: { type: "pie" },
-		labels: distribution?.map((d) => d.name) ?? [],
+		labels: distribution?.map((d) => BANNED_WORD_CATEGORY_LABELS[d.name] ?? d.name) ?? [],
 		legend: {
 			show: true,
 			position: "top",
@@ -103,7 +103,7 @@ export default function BannedWordsPage(): JSX.Element {
 			},
 		},
 		tooltip: {
-			y: { formatter: (val: number) => `${val} 次` },
+			y: { formatter: (val: number) => `${val} times` },
 		},
 	});
 
@@ -111,19 +111,21 @@ export default function BannedWordsPage(): JSX.Element {
 		() => [
 			{ title: "ID", dataIndex: "id", width: 60, align: "center" },
 			{
-				title: "违禁词类型",
+				title: "Category",
 				dataIndex: "category",
 				width: 120,
 				align: "center",
+				render: (v: string) => BANNED_WORD_CATEGORY_LABELS[v] ?? v,
 			},
 			{
-				title: "风险等级",
+				title: "Risk Level",
 				dataIndex: "riskLevel",
 				width: 100,
 				align: "center",
+				render: (v: string) => RISK_LEVEL_LABELS[v] ?? v,
 			},
 			{
-				title: "违禁词数量",
+				title: "Word Count",
 				dataIndex: "wordCount",
 				width: 120,
 				align: "center",
@@ -134,7 +136,7 @@ export default function BannedWordsPage(): JSX.Element {
 				),
 			},
 			{
-				title: "触发次数",
+				title: "Trigger Count",
 				dataIndex: "triggerCount",
 				width: 120,
 				align: "center",
@@ -154,14 +156,14 @@ export default function BannedWordsPage(): JSX.Element {
 				<DashboardFilterBar
 					onFilterChange={handleFilterChange}
 					modelOptions={[
-						{ label: "全部Model", value: "all" },
+						{ label: "All Models", value: "all" },
 						...(filterOpts?.models?.map((m) => ({ label: m, value: m })) ?? []),
 					]}
 					renderAgentSelect={({ value, onChange }) => (
 						<AgentSelect
 							value={value}
 							onChange={(selectedValue) => onChange(selectedValue)}
-							prependOptions={[{ label: "全部Agent", value: "all" }]}
+							prependOptions={[{ label: "All Agents", value: "all" }]}
 							allowClear={false}
 							className="w-36"
 							size="middle"
@@ -174,17 +176,17 @@ export default function BannedWordsPage(): JSX.Element {
 					{/* Left: stat cards */}
 					<div className="lg:col-span-2 flex flex-col gap-4">
 						<div className="rounded-xl bg-[var(--card)] p-5 shadow-sm border border-[var(--border)]">
-							<div className="text-sm text-[var(--muted-foreground)] mb-1">违禁词总数</div>
+							<div className="text-sm text-[var(--muted-foreground)] mb-1">Total Banned Words</div>
 							<div className="text-2xl font-bold text-[var(--foreground)]">{overview?.totalWords ?? 0}</div>
 						</div>
 						<div className="rounded-xl bg-[var(--card)] p-5 shadow-sm border border-[var(--border)]">
-							<div className="text-sm text-[var(--muted-foreground)] mb-1">用户触发违禁词总次数</div>
+							<div className="text-sm text-[var(--muted-foreground)] mb-1">Total User Triggers</div>
 							<div className="text-2xl font-bold text-[var(--foreground)]">
 								{overview?.totalUserTriggerCount.toLocaleString() ?? 0}
 							</div>
 						</div>
 						<div className="rounded-xl bg-[var(--card)] p-5 shadow-sm border border-[var(--border)]">
-							<div className="text-sm text-[var(--muted-foreground)] mb-1">违禁词拦截总次数</div>
+							<div className="text-sm text-[var(--muted-foreground)] mb-1">Total Intercepts</div>
 							<div className="text-2xl font-bold text-[var(--foreground)]">
 								{overview?.totalInterceptCount.toLocaleString() ?? 0}
 							</div>
@@ -192,20 +194,20 @@ export default function BannedWordsPage(): JSX.Element {
 					</div>
 
 					{/* Center: Pie Chart */}
-					<ChartCard title="违禁词类型统计" className="lg:col-span-5">
+					<ChartCard title="Category Distribution" className="lg:col-span-5">
 						{distribution && (
 							<Chart type="pie" height={280} options={pieOptions} series={distribution.map((d) => d.value)} />
 						)}
 					</ChartCard>
 
 					{/* Right: Bar Chart */}
-					<ChartCard title="用户违禁词触发排行榜" className="lg:col-span-5">
+					<ChartCard title="User Trigger Ranking" className="lg:col-span-5">
 						{userRank && (
 							<Chart
 								type="bar"
 								height={280}
 								options={barOptions}
-								series={[{ name: "触发次数", data: userRank.map((r) => r.count) }]}
+								series={[{ name: "Triggers", data: userRank.map((r) => r.count) }]}
 							/>
 						)}
 					</ChartCard>
@@ -215,7 +217,7 @@ export default function BannedWordsPage(): JSX.Element {
 				<div className="rounded-xl bg-[var(--card)] p-5 shadow-sm border border-[var(--border)]">
 					<div className="flex items-center gap-2 mb-4">
 						<Button type="primary" onClick={() => setAddModalOpen(true)}>
-							添加违禁词
+							Add Banned Word
 						</Button>
 						<Button
 							danger
@@ -226,7 +228,7 @@ export default function BannedWordsPage(): JSX.Element {
 								}
 							}}
 						>
-							管理违禁词
+							Manage Banned Words
 						</Button>
 					</div>
 

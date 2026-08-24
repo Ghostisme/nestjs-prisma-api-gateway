@@ -4,7 +4,7 @@ import { type JSX, useCallback, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import aiManagementService from "@/api/services/aiManagementService";
 import { getApiErrorMessage } from "@/utils/request-error";
-import type { BannedWordItem } from "../../types";
+import { BANNED_WORD_CATEGORY_LABELS, BANNED_WORD_STATUS_LABELS, type BannedWordItem } from "../../types";
 
 interface BannedWordListModalProps {
 	open: boolean;
@@ -66,10 +66,10 @@ export const BannedWordListModal = ({
 		async (record: BannedWordItem) => {
 			try {
 				await aiManagementService.toggleBannedWordStatus(record.id, record.status);
-				message.success(`${record.status === "启用" ? "禁用" : "启用"}成功`);
+				message.success(`${record.status === "启用" ? "Disabled" : "Enabled"} successfully`);
 				await refetchAll();
 			} catch (error) {
-				message.error(getApiErrorMessage(error, "操作失败"));
+				message.error(getApiErrorMessage(error, "Operation failed"));
 			}
 		},
 		[message, refetchAll],
@@ -78,18 +78,18 @@ export const BannedWordListModal = ({
 	const handleDelete = useCallback(
 		(record: BannedWordItem) => {
 			modal.confirm({
-				title: "确认删除",
-				content: `确定要删除违禁词「${record.wordName}」吗？删除后不可恢复。`,
-				okText: "删除",
+				title: "Confirm Delete",
+				content: `Delete banned word "${record.wordName}"? This cannot be undone.`,
+				okText: "Delete",
 				okType: "danger",
-				cancelText: "取消",
+				cancelText: "Cancel",
 				onOk: async () => {
 					try {
 						await aiManagementService.deleteBannedWord(record.id);
-						message.success("删除成功");
+						message.success("Deleted successfully");
 						await refetchAll();
 					} catch (error) {
-						message.error(getApiErrorMessage(error, "删除失败"));
+						message.error(getApiErrorMessage(error, "Failed to delete"));
 					}
 				},
 			});
@@ -107,57 +107,63 @@ export const BannedWordListModal = ({
 	const columns = useMemo<ColumnsType<BannedWordItem>>(
 		() => [
 			{
-				title: "违禁词名称",
+				title: "Word",
 				dataIndex: "wordName",
 				width: 110,
 				align: "center",
 			},
 			{
-				title: "输入触发",
+				title: "Input Trigger",
 				dataIndex: "inputTrigger",
 				width: 80,
 				align: "center",
 				render: renderCheck,
 			},
 			{
-				title: "输出触发",
+				title: "Output Trigger",
 				dataIndex: "outputTrigger",
 				width: 80,
 				align: "center",
 				render: renderCheck,
 			},
 			{
-				title: "精确匹配",
+				title: "Exact Match",
 				dataIndex: "exactMatch",
 				width: 80,
 				align: "center",
 				render: renderCheck,
 			},
 			{
-				title: "模糊匹配",
+				title: "Fuzzy Match",
 				dataIndex: "fuzzyMatch",
 				width: 80,
 				align: "center",
 				render: renderCheck,
 			},
 			{
-				title: "语义理解",
+				title: "Semantic",
 				dataIndex: "semanticMatch",
 				width: 80,
 				align: "center",
 				render: renderCheck,
 			},
 			{
-				title: "模型识别",
+				title: "Model",
 				dataIndex: "modelMatch",
 				width: 80,
 				align: "center",
 				render: renderCheck,
 			},
-			{ title: "添加时间", dataIndex: "addTime", width: 155, align: "center" },
-			{ title: "违禁词状态", dataIndex: "status", width: 100, align: "center" },
+			{ title: "Added", dataIndex: "addTime", width: 155, align: "center" },
 			{
-				title: "操作",
+				title: "Status",
+				dataIndex: "status",
+				width: 100,
+				align: "center",
+				render: (v: string) => BANNED_WORD_STATUS_LABELS[v] ?? v,
+			},
+			{
+				title: "Actions",
 				width: 120,
 				align: "center",
 				fixed: "right",
@@ -169,10 +175,10 @@ export const BannedWordListModal = ({
 							danger={record.status === "启用"}
 							onClick={() => handleToggleStatus(record)}
 						>
-							{record.status === "启用" ? "禁用" : "启用"}
+							{record.status === "启用" ? "Disable" : "Enable"}
 						</Button>
 						<Button type="link" className="p-0" danger onClick={() => handleDelete(record)}>
-							删除
+							Delete
 						</Button>
 					</Space>
 				),
@@ -182,12 +188,18 @@ export const BannedWordListModal = ({
 	);
 
 	return (
-		<Modal title={`违禁词列表 - ${categoryName}`} open={open} onCancel={onClose} footer={null} width={1000}>
+		<Modal
+			title={`Banned Words - ${BANNED_WORD_CATEGORY_LABELS[categoryName] ?? categoryName}`}
+			open={open}
+			onCancel={onClose}
+			footer={null}
+			width={1000}
+		>
 			<div className="flex flex-wrap items-center gap-3 mb-4">
 				<div className="flex items-center gap-1">
-					<span className="text-sm shrink-0">违禁词名称</span>
+					<span className="text-sm shrink-0">Word</span>
 					<Input
-						placeholder="请输入"
+						placeholder="Enter"
 						className="w-28"
 						size="middle"
 						value={searchName}
@@ -196,13 +208,13 @@ export const BannedWordListModal = ({
 					/>
 				</div>
 				<div className="flex items-center gap-1">
-					<span className="text-sm shrink-0">违禁词状态</span>
+					<span className="text-sm shrink-0">Status</span>
 					<Select
-						placeholder="请选择"
+						placeholder="Select"
 						className="w-24"
 						options={[
-							{ label: "启用", value: "启用" },
-							{ label: "禁用", value: "禁用" },
+							{ label: "Enabled", value: "启用" },
+							{ label: "Disabled", value: "禁用" },
 						]}
 						value={statusFilter}
 						onChange={setStatusFilter}
@@ -211,10 +223,10 @@ export const BannedWordListModal = ({
 				</div>
 				<Space className="ml-auto">
 					<Button type="primary" size="middle" onClick={handleSearch}>
-						查询
+						Search
 					</Button>
 					<Button size="middle" onClick={handleReset}>
-						重置
+						Reset
 					</Button>
 				</Space>
 			</div>
@@ -227,7 +239,7 @@ export const BannedWordListModal = ({
 				pagination={{
 					pageSize: 10,
 					total: filteredRecords.length,
-					showTotal: (total) => `共 ${total} 条数据`,
+					showTotal: (total) => `${total} records`,
 				}}
 				bordered
 				size="small"

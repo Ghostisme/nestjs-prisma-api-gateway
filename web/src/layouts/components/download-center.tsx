@@ -55,11 +55,11 @@ export function DownloadCenter() {
 				icon={<Icon icon="line-md:download" />}
 				onClick={handleOpen}
 			>
-				下载中心
+				Download Center
 			</Button>
 
 			<Modal
-				title="下载中心"
+				title="Download Center"
 				open={open}
 				onCancel={handleClose}
 				width={"50%"}
@@ -67,10 +67,10 @@ export function DownloadCenter() {
 				destroyOnHidden
 				footer={[
 					<Button key="cancel" onClick={handleClose}>
-						取消
+						Cancel
 					</Button>,
 					<Button key="ok" type="primary" onClick={handleClose}>
-						确认
+						OK
 					</Button>,
 				]}
 			>
@@ -90,7 +90,7 @@ export function DownloadCenter() {
 									))}
 								</div>
 							) : (
-								<Empty description="暂无数据" className="py-12" />
+								<Empty description="No data" className="py-12" />
 							)}
 						</div>
 						{loading && (
@@ -101,7 +101,7 @@ export function DownloadCenter() {
 					</div>
 
 					<div className="mt-3 flex shrink-0 items-center justify-between border-t pt-3">
-						<span className="text-xs text-[#8c8c8c]">共 {total} 条</span>
+						<span className="text-xs text-[#8c8c8c]">{total} total</span>
 						<Pagination
 							size="small"
 							current={page}

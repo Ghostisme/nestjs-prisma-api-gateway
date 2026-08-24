@@ -104,7 +104,7 @@ export default function AccountDropdown() {
 				</DropdownMenuItem>
 				<DropdownMenuSeparator /> */}
 				<DropdownMenuItem className="font-bold text-warning" onClick={logout}>
-					退出
+					Log out
 				</DropdownMenuItem>
 			</DropdownMenuContent>
 		</DropdownMenu>

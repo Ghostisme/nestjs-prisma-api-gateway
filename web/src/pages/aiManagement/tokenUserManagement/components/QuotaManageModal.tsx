@@ -31,15 +31,15 @@ export const QuotaManageModal = ({
 		switch (operationType) {
 			case "increase":
 				newQuota = currentQuota + val;
-				message = `该用户添加后Token总配额变更为${newQuota}, 是否确认？`;
+				message = `Total quota will change to ${newQuota}. Confirm?`;
 				break;
 			case "decrease":
 				newQuota = currentQuota - val;
-				message = `该用户减少后Token总配额变更为${newQuota}, 是否确认？`;
+				message = `Total quota will change to ${newQuota}. Confirm?`;
 				break;
 			case "unlimited":
-				newQuota = "不限制配额";
-				message = `该用户操作后Token总配额变更为<span style="color:red;font-weight:bold">不限制配额</span>, 是否确认？`;
+				newQuota = "Unlimited";
+				message = `Total quota will change to <span style="color:red;font-weight:bold">Unlimited</span>. Confirm?`;
 				break;
 			default:
 				return;
@@ -66,40 +66,40 @@ export const QuotaManageModal = ({
 	return (
 		<>
 			<Modal
-				title="管理配额"
+				title="Manage Quota"
 				open={open}
 				onCancel={handleCancel}
-				okText="确认添加"
-				cancelText="关闭窗口"
+				okText="Confirm"
+				cancelText="Close"
 				onOk={handleConfirmClick}
 				okButtonProps={{ disabled: operationType === "noChange" }}
 				width={500}
 			>
 				<div className="space-y-4 py-2">
 					<div className="flex items-center justify-between">
-						<span className="text-sm text-[var(--foreground)]">当前用户总配额</span>
+						<span className="text-sm text-[var(--foreground)]">Current Total Quota</span>
 						<span className="text-lg font-bold" style={{ color: "var(--colors-palette-primary-default)" }}>
 							{currentQuota === -1 ? "∞" : currentQuota}
 						</span>
 					</div>
 					<div className="flex items-center justify-between">
-						<span className="text-sm text-[var(--foreground)]">当前用户剩余配额</span>
+						<span className="text-sm text-[var(--foreground)]">Current Remaining</span>
 						<span className="text-lg font-bold" style={{ color: "var(--colors-palette-error-default)" }}>
 							{currentRemaining}
 						</span>
 					</div>
 
 					<div className="pt-2">
-						<div className="text-sm text-[var(--foreground)] mb-2">操作Token配额</div>
+						<div className="text-sm text-[var(--foreground)] mb-2">Adjust Token Quota</div>
 						<Radio.Group value={operationType} onChange={(e) => setOperationType(e.target.value)}>
 							<Space direction="vertical">
-								<Radio value="noChange">不更改配额</Radio>
+								<Radio value="noChange">No Change</Radio>
 								<Radio value="increase">
 									<Space>
-										修改序
+										Increase
 										{operationType === "increase" && (
 											<InputNumber
-												placeholder="请输入配额"
+												placeholder="Enter quota"
 												value={inputValue}
 												onChange={(val) => setInputValue(val)}
 												min={0}
@@ -110,10 +110,10 @@ export const QuotaManageModal = ({
 								</Radio>
 								<Radio value="decrease">
 									<Space>
-										减少
+										Decrease
 										{operationType === "decrease" && (
 											<InputNumber
-												placeholder="请输入配额"
+												placeholder="Enter quota"
 												value={inputValue}
 												onChange={(val) => setInputValue(val)}
 												min={0}
@@ -123,7 +123,7 @@ export const QuotaManageModal = ({
 										)}
 									</Space>
 								</Radio>
-								<Radio value="unlimited">不限制配额</Radio>
+								<Radio value="unlimited">Unlimited</Radio>
 							</Space>
 						</Radio.Group>
 					</div>
@@ -131,11 +131,11 @@ export const QuotaManageModal = ({
 			</Modal>
 
 			<Modal
-				title="提示"
+				title="Notice"
 				open={confirmOpen}
 				onCancel={() => setConfirmOpen(false)}
-				okText="确认激活"
-				cancelText="关闭窗口"
+				okText="Confirm"
+				cancelText="Close"
 				onOk={handleFinalConfirm}
 				width={420}
 			>

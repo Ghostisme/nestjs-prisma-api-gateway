@@ -12,13 +12,13 @@ export const BannedWordDetection = ({ hits }: BannedWordDetectionProps): JSX.Ele
 	const columns = useMemo<ColumnsType<ConversationBannedWordHit>>(
 		() => [
 			{
-				title: "触发时间",
+				title: "Trigger Time",
 				dataIndex: "triggerTime",
 				width: 180,
 				align: "center",
 			},
 			{
-				title: "触发违禁词",
+				title: "Triggered Word",
 				dataIndex: "triggeredWord",
 				width: 150,
 				align: "center",
@@ -29,7 +29,7 @@ export const BannedWordDetection = ({ hits }: BannedWordDetectionProps): JSX.Ele
 				),
 			},
 			{
-				title: "触发语句",
+				title: "Trigger Sentence",
 				dataIndex: "triggerSentence",
 				align: "center",
 			},
@@ -55,17 +55,17 @@ export const BannedWordDetection = ({ hits }: BannedWordDetectionProps): JSX.Ele
 							background: hits.length > 0 ? "var(--colors-palette-error-default)" : "var(--colors-palette-gray-400)",
 						}}
 					/>
-					<h3 className="text-base font-bold text-[var(--foreground)]">检测违禁词</h3>
+					<h3 className="text-base font-bold text-[var(--foreground)]">Banned Word Hits</h3>
 					{hits.length > 0 && (
 						<Tag color="error" className="ml-2">
 							<Icon icon="lucide:alert-triangle" size={12} className="mr-1 align-middle" />
-							{hits.length} 次触发
+							{hits.length} hit{hits.length === 1 ? "" : "s"}
 						</Tag>
 					)}
 					{hits.length === 0 && (
 						<Tag color="success" className="ml-2">
 							<Icon icon="lucide:check-circle" size={12} className="mr-1 align-middle" />
-							未检测到违禁词
+							No banned words detected
 						</Tag>
 					)}
 				</div>
@@ -79,7 +79,7 @@ export const BannedWordDetection = ({ hits }: BannedWordDetectionProps): JSX.Ele
 					pagination={false}
 					bordered
 					size="small"
-					locale={{ emptyText: "本次对话未触发违禁词" }}
+					locale={{ emptyText: "No banned words triggered in this conversation" }}
 				/>
 			</div>
 		</div>

@@ -19,13 +19,13 @@ export const exportDownload = async (api: string, search: string) => {
 
 	const link = document.createElement("a");
 	link.href = blobUrl;
-	link.download = filename || "默认文件名.xlsx"; // 优先使用后端返回的文件名
+	link.download = filename || "default.xlsx"; // 优先使用后端返回的文件名
 	document.body.appendChild(link);
 	link.click();
 
 	document.body.removeChild(link);
 	window.URL.revokeObjectURL(blobUrl);
-	message.success("导出成功");
+	message.success("Exported");
 };
 
 export const tableCfg = {

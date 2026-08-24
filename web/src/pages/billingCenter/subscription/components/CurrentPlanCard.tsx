@@ -5,10 +5,10 @@ import type { SubscriptionInfo } from "../../types";
 const { Title } = Typography;
 
 const STATUS_MAP: Record<string, { badge: "success" | "processing" | "error" | "default"; label: string }> = {
-	active: { badge: "success", label: "生效中" },
-	trial: { badge: "processing", label: "试用中" },
-	expired: { badge: "error", label: "已过期" },
-	cancelled: { badge: "default", label: "已取消" },
+	active: { badge: "success", label: "Active" },
+	trial: { badge: "processing", label: "Trial" },
+	expired: { badge: "error", label: "Expired" },
+	cancelled: { badge: "default", label: "Cancelled" },
 };
 
 interface CurrentPlanCardProps {
@@ -17,30 +17,30 @@ interface CurrentPlanCardProps {
 }
 
 export const CurrentPlanCard = ({ subscription, loading }: CurrentPlanCardProps): JSX.Element => {
-	const statusCfg = STATUS_MAP[subscription?.status ?? ""] ?? { badge: "default" as const, label: "未知" };
+	const statusCfg = STATUS_MAP[subscription?.status ?? ""] ?? { badge: "default" as const, label: "Unknown" };
 
 	return (
 		<Card loading={loading} className="border border-[var(--border)]">
 			<div className="flex items-center justify-between mb-4">
 				<Title level={5} className="mb-0">
-					当前订阅
+					Current Subscription
 				</Title>
 				{subscription && <Badge status={statusCfg.badge} text={statusCfg.label} />}
 			</div>
 
 			{subscription ? (
 				<Descriptions column={{ xs: 1, sm: 2, lg: 3 }} size="small" bordered>
-					<Descriptions.Item label="套餐等级">
+					<Descriptions.Item label="Plan Tier">
 						<Tag color="blue">{subscription.planTier}</Tag>
 					</Descriptions.Item>
-					<Descriptions.Item label="套餐名称">{subscription.planName}</Descriptions.Item>
-					<Descriptions.Item label="月 Token 限额">
-						{subscription.tokenLimitMonthly === -1 ? "无限制" : subscription.tokenLimitMonthly.toLocaleString()}
+					<Descriptions.Item label="Plan Name">{subscription.planName}</Descriptions.Item>
+					<Descriptions.Item label="Monthly Token Limit">
+						{subscription.tokenLimitMonthly === -1 ? "Unlimited" : subscription.tokenLimitMonthly.toLocaleString()}
 					</Descriptions.Item>
-					<Descriptions.Item label="并发限制">{subscription.concurrentLimit}</Descriptions.Item>
-					<Descriptions.Item label="生效时间">{subscription.periodStart ?? "—"}</Descriptions.Item>
-					<Descriptions.Item label="到期时间">{subscription.periodEnd ?? "—"}</Descriptions.Item>
-					<Descriptions.Item label="包含功能" span={3}>
+					<Descriptions.Item label="Concurrency Limit">{subscription.concurrentLimit}</Descriptions.Item>
+					<Descriptions.Item label="Start Date">{subscription.periodStart ?? "—"}</Descriptions.Item>
+					<Descriptions.Item label="End Date">{subscription.periodEnd ?? "—"}</Descriptions.Item>
+					<Descriptions.Item label="Features" span={3}>
 						<div className="flex flex-wrap gap-1">
 							{subscription.features.map((f) => (
 								<Tag key={f}>{f}</Tag>
@@ -49,7 +49,7 @@ export const CurrentPlanCard = ({ subscription, loading }: CurrentPlanCardProps)
 					</Descriptions.Item>
 				</Descriptions>
 			) : (
-				<div className="text-center py-8 text-[var(--muted-foreground)]">暂无订阅信息</div>
+				<div className="text-center py-8 text-[var(--muted-foreground)]">No subscription information</div>
 			)}
 		</Card>
 	);

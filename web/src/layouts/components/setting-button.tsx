@@ -83,14 +83,14 @@ export default function SettingButton() {
 			</SheetTrigger>
 			<SheetContent style={sheetContentBgStyle} className="gap-0" onOpenAutoFocus={(e) => e.preventDefault()}>
 				<SheetHeader className="flex flex-row items-center justify-between px-6 py-4 shrink-0">
-					<SheetTitle>设置</SheetTitle>
+					<SheetTitle>Settings</SheetTitle>
 					<SheetDescription />
 				</SheetHeader>
 				<ScrollArea>
 					<div className="flex flex-col gap-6 px-6 py-2">
 						{/* theme mode */}
 						<div className="flex flex-col gap-2">
-							<Text variant="subTitle1">模式</Text>
+							<Text variant="subTitle1">Mode</Text>
 							<div className="flex flex-row gap-4">
 								<Card
 									onClick={() => updateSettings({ themeMode: ThemeMode.Light })}
@@ -117,7 +117,7 @@ export default function SettingButton() {
 
 						{/* theme layout */}
 						<div className="flex flex-col gap-2">
-							<Text variant="subTitle1">布局</Text>
+							<Text variant="subTitle1">Layout</Text>
 
 							<div className="grid grid-cols-3 gap-4">
 								{/* vertical */}
@@ -243,10 +243,10 @@ export default function SettingButton() {
 							<div className="flex flex-row items-center justify-between">
 								<Tooltip delayDuration={700} defaultOpen={false} disableHoverableContent>
 									<TooltipTrigger>
-										<Text variant="subTitle2">拉伸</Text>
+										<Text variant="subTitle2">Stretch</Text>
 										<Icon icon="solar:question-circle-linear" className="ml-1" />
 									</TooltipTrigger>
-									<TooltipContent>仅在屏幕宽度大于 1280px 时可用(xl)</TooltipContent>
+									<TooltipContent>Available when the viewport is wider than 1280px (xl)</TooltipContent>
 								</Tooltip>
 								<Switch
 									checked={themeStretch}
@@ -257,7 +257,7 @@ export default function SettingButton() {
 
 						{/* theme presets */}
 						<div className="flex flex-col gap-2">
-							<Text variant="subTitle1">预设</Text>
+							<Text variant="subTitle1">Presets</Text>
 							<div className="flex flex-wrap gap-1">
 								{Object.entries(presetsColors).map(([preset, color]) => (
 									<div
@@ -284,9 +284,9 @@ export default function SettingButton() {
 
 						{/* font */}
 						<div className="flex flex-col gap-2">
-							<Text variant="subTitle1">字体</Text>
+							<Text variant="subTitle1">Font</Text>
 
-							<Text variant="subTitle2">字体系列</Text>
+							<Text variant="subTitle2">Font family</Text>
 							<div className="flex flex-row gap-3">
 								{Object.entries(FontFamilyPreset).map(([font, family]) => (
 									<Card
@@ -308,7 +308,7 @@ export default function SettingButton() {
 								))}
 							</div>
 
-							<Text variant="subTitle2">字体大小</Text>
+							<Text variant="subTitle2">Font size</Text>
 							<Slider
 								min={12}
 								max={20}
@@ -320,9 +320,9 @@ export default function SettingButton() {
 
 						{/* Page config */}
 						<div className="flex flex-col gap-2">
-							<Text variant="subTitle1">页面</Text>
+							<Text variant="subTitle1">Page</Text>
 							<div className="flex items-center justify-between">
-								<Text variant="subTitle2">面包屑</Text>
+								<Text variant="subTitle2">Breadcrumb</Text>
 								<Switch checked={breadCrumb} onCheckedChange={(checked) => updateSettings({ breadCrumb: checked })} />
 								{/* <div className="flex items-center justify-between text-sm text-text-disabled">
 									<div>多标签</div>
@@ -346,16 +346,16 @@ export default function SettingButton() {
 						className="w-full border-dashed text-text-primary hover:border-primary hover:text-primary"
 						onClick={toggleFullScreen}
 					>
-						<div className="flex items-center justify-center" aria-label={isFullscreen ? "退出全屏" : "全屏"}>
+						<div className="flex items-center justify-center" aria-label={isFullscreen ? "Exit fullscreen" : "Fullscreen"}>
 							{isFullscreen ? (
 								<>
 									<Icon icon="local:ic-settings-exit-fullscreen" />
-									<span className="ml-2">退出全屏</span>
+									<span className="ml-2">Exit fullscreen</span>
 								</>
 							) : (
 								<>
 									<Icon icon="local:ic-settings-fullscreen" />
-									<span className="ml-2">全屏</span>
+									<span className="ml-2">Fullscreen</span>
 								</>
 							)}
 						</div>

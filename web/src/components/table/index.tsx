@@ -142,12 +142,12 @@ function TagMultiSelect({
 				>
 					{expanded ? (
 						<>
-							收起更多标签
+							Collapse tags
 							<Icon icon="solar:alt-arrow-up-linear" className="text-sm" />
 						</>
 					) : (
 						<>
-							展开更多标签
+							Expand tags
 							<Icon icon="solar:alt-arrow-down-linear" className="text-sm" />
 						</>
 					)}
@@ -397,7 +397,7 @@ const getDateRangeFormat = (field: SearchFieldConfig): string => {
 };
 
 const renderSearchField = (field: SearchFieldConfig) => {
-	const placeholder = field.placeholder ?? "请输入";
+	const placeholder = field.placeholder ?? "Enter…";
 	const props = field.props ?? {};
 	if (field.type === "select" || field.type === "multiSelect" || field.type === "selectMultiQuery") {
 		const { displayAsTagList, tagListMaxVisibleRows, ...selectProps } = props as {
@@ -412,7 +412,7 @@ const renderSearchField = (field: SearchFieldConfig) => {
 		}
 		return (
 			<Select
-				placeholder={field.placeholder ?? "请选择"}
+				placeholder={field.placeholder ?? "Select"}
 				options={field.options}
 				mode={field.type === "multiSelect" ? "multiple" : undefined}
 				optionFilterProp="label"
@@ -422,7 +422,7 @@ const renderSearchField = (field: SearchFieldConfig) => {
 		);
 	}
 	if (field.type === "brandSelect") {
-		return <BrandSelect placeholder={field.placeholder ?? "请选择"} {...props} />;
+		return <BrandSelect placeholder={field.placeholder ?? "Select"} {...props} />;
 	}
 	if (field.type === "brandTreeSelect") {
 		const {
@@ -441,7 +441,7 @@ const renderSearchField = (field: SearchFieldConfig) => {
 		};
 		return (
 			<BrandTreeSelect
-				placeholder={field.placeholder ?? "请选择品牌/车系"}
+				placeholder={field.placeholder ?? "Select brand/series"}
 				showSearch={showSearch}
 				showScrollBar={showScrollBar}
 				allowClear={allowClear}
@@ -459,7 +459,7 @@ const renderSearchField = (field: SearchFieldConfig) => {
 		if ("defaultValue" in dateProps) {
 			dateProps.defaultValue = normalizeDateValue(dateProps.defaultValue);
 		}
-		return <DatePicker className="w-full" placeholder={field.placeholder ?? "请选择"} {...dateProps} />;
+		return <DatePicker className="w-full" placeholder={field.placeholder ?? "Select"} {...dateProps} />;
 	}
 	if (field.type === "daterange") {
 		const rangeProps = { ...props };
@@ -472,20 +472,20 @@ const renderSearchField = (field: SearchFieldConfig) => {
 		if ("defaultValue" in rangeProps) {
 			rangeProps.defaultValue = normalizeRangeValue(rangeProps.defaultValue);
 		}
-		return <DatePicker.RangePicker className="w-full" placeholder={["开始时间", "结束时间"]} {...rangeProps} />;
+		return <DatePicker.RangePicker className="w-full" placeholder={["Start time", "End time"]} {...rangeProps} />;
 	}
 	if (field.type === "number") {
 		return <InputNumber className="w-full" placeholder={placeholder} {...props} />;
 	}
 	if (field.type === "cascader") {
-		return <Cascader placeholder={field.placeholder ?? "请选择"} options={field.options} {...props} />;
+		return <Cascader placeholder={field.placeholder ?? "Select"} options={field.options} {...props} />;
 	}
 	if (field.type === "treeSelect" || field.type === "multiTreeSelect") {
 		const isMultiple = field.type === "multiTreeSelect";
 		return (
 			<TreeSelect
 				className="w-full"
-				placeholder={field.placeholder ?? "请选择"}
+				placeholder={field.placeholder ?? "Select"}
 				treeData={field.treeData}
 				showSearch
 				showScrollBar
@@ -624,7 +624,7 @@ export default function ConfigTable<T>({ config, actionRef }: ConfigTableProps<T
 		});
 		if (rowActions?.length) {
 			mapped.push({
-				title: "操作",
+				title: "Actions",
 				key: "__row_actions__",
 				width: 200,
 				align: "left",
@@ -731,7 +731,7 @@ export default function ConfigTable<T>({ config, actionRef }: ConfigTableProps<T
 				setTotal(nextTotal);
 				events?.onLoadSuccess?.(list);
 			} catch (err) {
-				const errorMessage = err instanceof Error ? err.message : "加载失败";
+				const errorMessage = err instanceof Error ? err.message : "Failed to load";
 				setError(errorMessage);
 				events?.onLoadError?.(err as Error);
 			} finally {
@@ -1011,7 +1011,7 @@ export default function ConfigTable<T>({ config, actionRef }: ConfigTableProps<T
 		if (!error || error === lastErrorRef.current) return;
 		lastErrorRef.current = error;
 		Modal.error({
-			title: "请求异常",
+			title: "Request error",
 			content: error,
 		});
 	}, [error]);
@@ -1137,9 +1137,9 @@ export default function ConfigTable<T>({ config, actionRef }: ConfigTableProps<T
 						value={tableSize}
 						onChange={handleDensityChange}
 						options={[
-							{ label: "紧凑", value: "small" },
-							{ label: "默认", value: "middle" },
-							{ label: "宽松", value: "large" },
+							{ label: "Compact", value: "small" },
+							{ label: "Default", value: "middle" },
+							{ label: "Loose", value: "large" },
 						]}
 						className="w-24"
 					/>
@@ -1157,7 +1157,7 @@ export default function ConfigTable<T>({ config, actionRef }: ConfigTableProps<T
 					</Popover>
 				) : null}
 				{toolbar?.export?.enabled ? (
-					<Button onClick={() => handleExport((toolbar.export?.formats?.[0] ?? "csv") as "csv" | "excel")}>导出</Button>
+					<Button onClick={() => handleExport((toolbar.export?.formats?.[0] ?? "csv") as "csv" | "excel")}>Export</Button>
 				) : null}
 				{slots?.toolbarRight?.()}
 			</div>
@@ -1230,14 +1230,14 @@ export default function ConfigTable<T>({ config, actionRef }: ConfigTableProps<T
 																	noStyle
 																	initialValue={(field.defaultValue as any)?.min}
 																>
-																	<InputNumber className="w-1/2" placeholder="最小值" {...(field.props ?? {})} />
+																	<InputNumber className="w-1/2" placeholder="Min" {...(field.props ?? {})} />
 																</Form.Item>
 																<Form.Item
 																	name={[field.name, "max"]}
 																	noStyle
 																	initialValue={(field.defaultValue as any)?.max}
 																>
-																	<InputNumber className="w-1/2" placeholder="最大值" {...(field.props ?? {})} />
+																	<InputNumber className="w-1/2" placeholder="Max" {...(field.props ?? {})} />
 																</Form.Item>
 															</Space.Compact>
 														</Form.Item>
@@ -1268,10 +1268,10 @@ export default function ConfigTable<T>({ config, actionRef }: ConfigTableProps<T
 							<div className={searchActionsClassName}>
 								<Space orientation={searchActionsOrientation} size={6}>
 									<Button type="primary" onClick={handleSearch} icon={<Icon icon="ep:search" />}>
-										{search?.searchButtonText ?? "搜索"}
+										{search?.searchButtonText ?? "Search"}
 									</Button>
 									<Button onClick={handleReset} icon={<Icon icon="mingcute:refresh-2-line" />}>
-										{search?.resetButtonText ?? "重置"}
+										{search?.resetButtonText ?? "Reset"}
 									</Button>
 								</Space>
 								{search?.showAdvanced ? (
@@ -1280,7 +1280,7 @@ export default function ConfigTable<T>({ config, actionRef }: ConfigTableProps<T
 										onClick={() => setIsExpanded((prev) => !prev)}
 										className={searchExpandButtonClassName}
 									>
-										{isExpanded ? "收起" : "展开"}
+										{isExpanded ? "Collapse" : "Expand"}
 										<Icon icon={isExpanded ? "ep:arrow-up" : "ep:arrow-down"} className="ml-1 text-sm" />
 									</Button>
 								) : null}
@@ -1325,7 +1325,7 @@ export default function ConfigTable<T>({ config, actionRef }: ConfigTableProps<T
 								}}
 							>
 								<span className="text-muted-foreground text-sm">
-									已勾选({selectedRowKeys.length}/{tableData.length})
+									Selected ({selectedRowKeys.length}/{tableData.length})
 								</span>
 							</Checkbox>
 						) : null}
@@ -1489,7 +1489,7 @@ export default function ConfigTable<T>({ config, actionRef }: ConfigTableProps<T
 	const tableContentNode = (
 		<>
 			<div className="mt-4 w-full">
-				<Spin spinning={loading} tip="加载中...">
+				<Spin spinning={loading} tip="Loading...">
 					{bodyNode}
 				</Spin>
 			</div>
@@ -1510,14 +1510,14 @@ export default function ConfigTable<T>({ config, actionRef }: ConfigTableProps<T
 								return (
 									<span className={styles.paginationNav}>
 										<Icon icon="ep:arrow-left" />
-										上一页
+										Previous
 									</span>
 								);
 							}
 							if (type === "next") {
 								return (
 									<span className={styles.paginationNav}>
-										下一页
+										Next
 										<Icon icon="ep:arrow-right" />
 									</span>
 								);

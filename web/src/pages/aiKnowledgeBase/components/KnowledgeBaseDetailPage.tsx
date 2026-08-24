@@ -13,14 +13,14 @@ interface KnowledgeBaseDetailPageProps {
 }
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
-	active: { label: "启用", color: "green" },
-	disabled: { label: "禁用", color: "red" },
+	active: { label: "Enabled", color: "green" },
+	disabled: { label: "Disabled", color: "red" },
 };
 
 const DOC_STATUS_MAP: Record<string, { label: string; color: string }> = {
-	processing: { label: "处理中", color: "blue" },
-	completed: { label: "已完成", color: "green" },
-	failed: { label: "失败", color: "red" },
+	processing: { label: "Processing", color: "blue" },
+	completed: { label: "Completed", color: "green" },
+	failed: { label: "Failed", color: "red" },
 };
 
 function formatFileSize(bytes: number): string {
@@ -41,17 +41,17 @@ export default function KnowledgeBaseDetailPage({
 
 	const docColumns = useMemo<ColumnsType<KnowledgeBaseDocument>>(
 		() => [
-			{ title: "文件名", dataIndex: "fileName", key: "fileName" },
+			{ title: "File name", dataIndex: "fileName", key: "fileName" },
 			{
-				title: "文件大小",
+				title: "Size",
 				dataIndex: "fileSize",
 				key: "fileSize",
 				render: (v: number) => formatFileSize(v),
 			},
-			{ title: "文件类型", dataIndex: "fileType", key: "fileType" },
-			{ title: "上传时间", dataIndex: "uploadTime", key: "uploadTime" },
+			{ title: "Type", dataIndex: "fileType", key: "fileType" },
+			{ title: "Uploaded", dataIndex: "uploadTime", key: "uploadTime" },
 			{
-				title: "状态",
+				title: "Status",
 				dataIndex: "status",
 				key: "status",
 				render: (status: string) => {
@@ -75,7 +75,7 @@ export default function KnowledgeBaseDetailPage({
 	}
 
 	if (!detail) {
-		return <div className="text-center py-20 text-[var(--muted-foreground)]">知识库不存在或已删除</div>;
+		return <div className="text-center py-20 text-[var(--muted-foreground)]">Knowledge base not found or deleted</div>;
 	}
 
 	const statusInfo = STATUS_MAP[detail.status] ?? {
@@ -93,36 +93,36 @@ export default function KnowledgeBaseDetailPage({
 						onClick={onBack}
 						className="flex items-center"
 					>
-						返回
+						Back
 					</Button>
-					<h2 className="text-lg font-semibold m-0">知识库详情</h2>
+					<h2 className="text-lg font-semibold m-0">Knowledge base detail</h2>
 				</div>
 				<Button type="primary" onClick={() => onEdit(knowledgeBaseId)}>
-					编辑
+					Edit
 				</Button>
 			</div>
 
 			<div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-8">
 				<h3 className="text-base font-semibold flex items-center gap-2 mb-6">
 					<span className="inline-block w-1 h-4 rounded bg-primary" />
-					基本信息
+					Basic info
 				</h3>
 
 				<div className="grid grid-cols-2 gap-y-5 gap-x-10 max-w-3xl">
 					<div>
-						<div className="text-sm text-[var(--muted-foreground)] mb-1">知识库名称</div>
+						<div className="text-sm text-[var(--muted-foreground)] mb-1">Name</div>
 						<div className="text-base font-medium text-[var(--foreground)]">{detail.name}</div>
 					</div>
 					<div>
-						<div className="text-sm text-[var(--muted-foreground)] mb-1">状态</div>
+						<div className="text-sm text-[var(--muted-foreground)] mb-1">Status</div>
 						<Tag color={statusInfo.color}>{statusInfo.label}</Tag>
 					</div>
 					<div className="col-span-2">
-						<div className="text-sm text-[var(--muted-foreground)] mb-1">知识库描述</div>
+						<div className="text-sm text-[var(--muted-foreground)] mb-1">Description</div>
 						<div className="text-sm text-[var(--foreground)] whitespace-pre-wrap">{detail.description || "-"}</div>
 					</div>
 					<div>
-						<div className="text-sm text-[var(--muted-foreground)] mb-1">标签</div>
+						<div className="text-sm text-[var(--muted-foreground)] mb-1">Tags</div>
 						<div className="flex gap-1 flex-wrap">
 							{detail.tags.length > 0 ? (
 								detail.tags.map((tag) => (
@@ -136,15 +136,15 @@ export default function KnowledgeBaseDetailPage({
 						</div>
 					</div>
 					<div>
-						<div className="text-sm text-[var(--muted-foreground)] mb-1">引用次数</div>
+						<div className="text-sm text-[var(--muted-foreground)] mb-1">References</div>
 						<div className="text-base font-medium text-[var(--foreground)]">{detail.referenceCount}</div>
 					</div>
 					<div>
-						<div className="text-sm text-[var(--muted-foreground)] mb-1">创建时间</div>
+						<div className="text-sm text-[var(--muted-foreground)] mb-1">Created</div>
 						<div className="text-sm text-[var(--foreground)]">{detail.createdAt}</div>
 					</div>
 					<div>
-						<div className="text-sm text-[var(--muted-foreground)] mb-1">更新时间</div>
+						<div className="text-sm text-[var(--muted-foreground)] mb-1">Updated</div>
 						<div className="text-sm text-[var(--foreground)]">{detail.updatedAt}</div>
 					</div>
 				</div>
@@ -153,9 +153,9 @@ export default function KnowledgeBaseDetailPage({
 			<div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-8">
 				<h3 className="text-base font-semibold flex items-center gap-2 mb-6">
 					<span className="inline-block w-1 h-4 rounded bg-primary" />
-					知识库文档
+					Documents
 					<span className="text-sm font-normal text-[var(--muted-foreground)]">
-						（共 {detail.documents?.length ?? 0} 个文档）
+						({detail.documents?.length ?? 0} files)
 					</span>
 				</h3>
 
@@ -166,7 +166,7 @@ export default function KnowledgeBaseDetailPage({
 					pagination={false}
 					bordered
 					size="middle"
-					locale={{ emptyText: "暂无文档" }}
+					locale={{ emptyText: "No documents" }}
 				/>
 			</div>
 		</div>

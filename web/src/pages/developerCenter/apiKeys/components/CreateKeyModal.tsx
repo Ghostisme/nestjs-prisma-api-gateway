@@ -6,10 +6,10 @@ import type { ApiKeyCreatedResponse, CreateApiKeyRequest } from "../../types";
 const { Paragraph } = Typography;
 
 const SCOPE_OPTIONS = [
-	{ label: "对话", value: "chat" },
-	{ label: "知识库", value: "knowledge" },
-	{ label: "模型调用", value: "model" },
-	{ label: "管理", value: "admin" },
+	{ label: "Chat", value: "chat" },
+	{ label: "Knowledge Base", value: "knowledge" },
+	{ label: "Model Calls", value: "model" },
+	{ label: "Admin", value: "admin" },
 ];
 
 interface CreateKeyModalProps {
@@ -31,10 +31,10 @@ export const CreateKeyModal = ({ open, onClose, onSubmit, onSuccess }: CreateKey
 			setLoading(true);
 			const resp = await onSubmit(values);
 			setCreatedKey(resp);
-			message.success("API Key 创建成功");
+			message.success("API Key created");
 			onSuccess();
 		} catch (error) {
-			message.error(getApiErrorMessage(error, "创建失败，请重试"));
+			message.error(getApiErrorMessage(error, "Creation failed, please try again"));
 		} finally {
 			setLoading(false);
 		}
@@ -48,13 +48,13 @@ export const CreateKeyModal = ({ open, onClose, onSubmit, onSuccess }: CreateKey
 
 	if (createdKey) {
 		return (
-			<Modal title="API Key 已创建" open={open} onCancel={handleClose} footer={null} width={520}>
+			<Modal title="API Key Created" open={open} onCancel={handleClose} footer={null} width={520}>
 				<div className="space-y-4 py-2">
 					<div className="rounded-lg bg-amber-50 border border-amber-200 p-4 text-sm text-amber-800">
-						请立即复制并妥善保管以下 Key，关闭后将无法再次查看完整密钥。
+						Copy and store the Key below now. You won't be able to view the full key again after closing.
 					</div>
 					<div>
-						<div className="text-sm text-[var(--muted-foreground)] mb-1">名称</div>
+						<div className="text-sm text-[var(--muted-foreground)] mb-1">Name</div>
 						<div className="font-medium">{createdKey.name}</div>
 					</div>
 					<div>
@@ -70,28 +70,28 @@ export const CreateKeyModal = ({ open, onClose, onSubmit, onSuccess }: CreateKey
 
 	return (
 		<Modal
-			title="创建 API Key"
+			title="Create API Key"
 			open={open}
 			onCancel={handleClose}
 			onOk={handleSubmit}
-			okText="创建"
-			cancelText="取消"
+			okText="Create"
+			cancelText="Cancel"
 			confirmLoading={loading}
 			width={520}
 			destroyOnClose
 		>
 			<Form form={form} layout="vertical" className="pt-2">
-				<Form.Item name="name" label="名称" rules={[{ required: true, message: "请输入 Key 名称" }]}>
-					<Input placeholder="例如：生产环境调用" maxLength={50} />
+				<Form.Item name="name" label="Name" rules={[{ required: true, message: "Enter a Key name" }]}>
+					<Input placeholder="e.g. Production calls" maxLength={50} />
 				</Form.Item>
-				<Form.Item name="scopes" label="权限范围">
-					<Select mode="multiple" placeholder="不选则默认全部权限" options={SCOPE_OPTIONS} allowClear />
+				<Form.Item name="scopes" label="Scopes">
+					<Select mode="multiple" placeholder="Leave empty for all permissions" options={SCOPE_OPTIONS} allowClear />
 				</Form.Item>
-				<Form.Item name="rateLimit" label="速率限制（次/分钟）">
-					<Input type="number" placeholder="留空则使用默认限制" min={1} />
+				<Form.Item name="rateLimit" label="Rate Limit (per minute)">
+					<Input type="number" placeholder="Leave empty to use default limit" min={1} />
 				</Form.Item>
-				<Form.Item name="expiresAt" label="过期时间">
-					<DatePicker className="w-full" placeholder="不选则永不过期" showTime />
+				<Form.Item name="expiresAt" label="Expiration">
+					<DatePicker className="w-full" placeholder="Leave empty to never expire" showTime />
 				</Form.Item>
 			</Form>
 		</Modal>

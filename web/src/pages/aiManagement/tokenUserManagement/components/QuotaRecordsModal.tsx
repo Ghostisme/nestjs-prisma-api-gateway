@@ -20,17 +20,17 @@ export const QuotaRecordsModal = ({ open, onClose, userId }: QuotaRecordsModalPr
 
 	const columns = useMemo<ColumnsType<QuotaOperationRecord>>(
 		() => [
-			{ title: "配额原始配额", dataIndex: "originalQuota", align: "center" },
-			{ title: "配额操作", dataIndex: "operation", align: "center" },
-			{ title: "配额实际配额", dataIndex: "actualQuota", align: "center" },
-			{ title: "操作人类", dataIndex: "operatorName", align: "center" },
-			{ title: "操作时间", dataIndex: "operateTime", align: "center" },
+			{ title: "Original Quota", dataIndex: "originalQuota", align: "center" },
+			{ title: "Operation", dataIndex: "operation", align: "center" },
+			{ title: "Actual Quota", dataIndex: "actualQuota", align: "center" },
+			{ title: "Operator", dataIndex: "operatorName", align: "center" },
+			{ title: "Operate Time", dataIndex: "operateTime", align: "center" },
 		],
 		[],
 	);
 
 	return (
-		<Modal title="操作记录" open={open} onCancel={onClose} footer={null} width={700}>
+		<Modal title="History" open={open} onCancel={onClose} footer={null} width={700}>
 			<Table<QuotaOperationRecord>
 				columns={columns}
 				dataSource={data}

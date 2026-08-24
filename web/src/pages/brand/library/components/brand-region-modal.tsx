@@ -47,7 +47,7 @@ export const BrandRegionModal = ({ open, onClose, brandId }: BrandRegionModalPro
 				})
 				.catch((err) => {
 					console.error(err);
-					message.error(getApiErrorMessage(err, "获取详情失败"));
+					message.error(getApiErrorMessage(err, "Failed to load details"));
 				})
 				.finally(() => {
 					setLoading(false);
@@ -81,25 +81,25 @@ export const BrandRegionModal = ({ open, onClose, brandId }: BrandRegionModalPro
 
 	const columns = [
 		{
-			title: "大区ID",
+			title: "Region ID",
 			dataIndex: "regionId",
 			key: "regionId",
 			// width: 100,
 		},
 		{
-			title: "大区名称",
+			title: "Region Name",
 			dataIndex: "regionName",
 			key: "regionName",
 			// width: 150,
 		},
 		{
-			title: "小区名称",
+			title: "Community Name",
 			dataIndex: "communityName",
 			key: "communityName",
 			render: (text: string) => text || "-",
 		},
 		{
-			title: "加入时间",
+			title: "Join Time",
 			dataIndex: "joinTime",
 			key: "joinTime",
 			// width: 180,
@@ -109,7 +109,7 @@ export const BrandRegionModal = ({ open, onClose, brandId }: BrandRegionModalPro
 
 	return (
 		<Modal
-			title="查看大区数量"
+			title="Regions"
 			closable={{ "aria-label": "Custom Close Button" }}
 			open={open}
 			onCancel={onClose}

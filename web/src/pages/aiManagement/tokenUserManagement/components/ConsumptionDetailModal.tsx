@@ -31,7 +31,7 @@ export const ConsumptionDetailModal = ({
 		const records = data?.records;
 		if (!records?.length) return;
 
-		const headers = ["使用模型", "使用Agent", "Input Token", "Out Token", "消耗Token", "剩余Token", "消耗时间"];
+		const headers = ["Model", "Agent", "Input Token", "Out Token", "Consumed Token", "Remaining Token", "Consume Time"];
 		const csvRows = [
 			headers.join(","),
 			...records.map((r) =>
@@ -45,7 +45,7 @@ export const ConsumptionDetailModal = ({
 		const url = URL.createObjectURL(blob);
 		const a = document.createElement("a");
 		a.href = url;
-		a.download = `消耗明细_${userName}_${new Date().toISOString().slice(0, 10)}.csv`;
+		a.download = `consumption_${userName}_${new Date().toISOString().slice(0, 10)}.csv`;
 		a.click();
 		URL.revokeObjectURL(url);
 	}, [data?.records, userName]);
@@ -60,8 +60,8 @@ export const ConsumptionDetailModal = ({
 
 	const columns = useMemo<ColumnsType<TokenConsumptionDetail>>(
 		() => [
-			{ title: "使用模型", dataIndex: "modelType", align: "center" },
-			{ title: "使用Agent", dataIndex: "agentName", align: "center" },
+			{ title: "Model", dataIndex: "modelType", align: "center" },
+			{ title: "Agent", dataIndex: "agentName", align: "center" },
 			{
 				title: "Input Token",
 				dataIndex: "inputToken",
@@ -75,24 +75,24 @@ export const ConsumptionDetailModal = ({
 				render: (v: number) => v.toLocaleString(),
 			},
 			{
-				title: "消耗Token",
+				title: "Consumed Token",
 				dataIndex: "consumeToken",
 				align: "center",
 				render: (v: number) => v.toLocaleString(),
 			},
 			{
-				title: "剩余Token",
+				title: "Remaining Token",
 				dataIndex: "remainToken",
 				align: "center",
 				render: (v: number) => v.toLocaleString(),
 			},
-			{ title: "消耗时间", dataIndex: "consumeTime", align: "center" },
+			{ title: "Consume Time", dataIndex: "consumeTime", align: "center" },
 			{
-				title: "操作",
+				title: "Actions",
 				align: "center",
 				render: (_: unknown, record: TokenConsumptionDetail) => (
 					<Button type="link" className="p-0" onClick={() => handleViewConversation(record)}>
-						查看详情
+						View Details
 					</Button>
 				),
 			},
@@ -101,10 +101,10 @@ export const ConsumptionDetailModal = ({
 	);
 
 	return (
-		<Modal title={`查看消耗明细 - ${userName}`} open={open} onCancel={onClose} footer={null} width={1000}>
+		<Modal title={`Usage Detail - ${userName}`} open={open} onCancel={onClose} footer={null} width={1000}>
 			<div className="flex justify-end mb-3">
 				<Button type="primary" size="small" onClick={handleExport} disabled={!data?.records?.length}>
-					导出消耗数据
+					Export
 				</Button>
 			</div>
 			<Table<TokenConsumptionDetail>
@@ -115,7 +115,7 @@ export const ConsumptionDetailModal = ({
 				pagination={{
 					pageSize: 10,
 					total: data?.total,
-					showTotal: (total) => `共 ${total} 条数据`,
+					showTotal: (total) => `${total} records`,
 				}}
 				bordered
 				size="small"

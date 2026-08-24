@@ -8,9 +8,9 @@ import type { LlmModelItem } from "@/api/services/llmModelService";
 const { Title, Text } = Typography;
 
 function statusLabel(status: string): { text: string; active: boolean } {
-	if (status === "enabled" || status === "active") return { text: "可用", active: true };
-	if (status === "coming_soon") return { text: "即将上线", active: false };
-	return { text: "停用", active: false };
+	if (status === "enabled" || status === "active") return { text: "Available", active: true };
+	if (status === "coming_soon") return { text: "Coming Soon", active: false };
+	return { text: "Disabled", active: false };
 }
 
 export default function ModelsPage(): JSX.Element {
@@ -23,7 +23,7 @@ export default function ModelsPage(): JSX.Element {
 	return (
 		<Spin spinning={isLoading}>
 			<div className="space-y-4">
-				<h2 className="text-lg font-semibold text-[var(--foreground)]">模型管理</h2>
+				<h2 className="text-lg font-semibold text-[var(--foreground)]">Model Management</h2>
 
 				<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 					{models.map((model) => {
@@ -59,7 +59,7 @@ export default function ModelsPage(): JSX.Element {
 
 				{models.length === 0 && !isLoading && (
 					<Card className="border border-[var(--border)]">
-						<Empty description="暂无模型数据" />
+						<Empty description="No model data" />
 					</Card>
 				)}
 			</div>

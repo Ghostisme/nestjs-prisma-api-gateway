@@ -75,7 +75,7 @@ export function StorageInfo() {
 			<span className="relative flex items-center justify-center w-[10px] h-[10px] rounded-full bg-[#bae697]">
 				<span className="w-[6px] h-[6px] rounded-full bg-[#00b42a]" />
 			</span>
-			<span>我已使用</span>
+			<span>Used</span>
 			<span className="text-sm">
 				<span className="text-[#00B42A]">{toGB(occupySize)}</span>
 				<span className="text-[#00B42A] dark:text-white">GB</span>

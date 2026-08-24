@@ -4,9 +4,9 @@ import { type JSX, useCallback, useMemo } from "react";
 import type { ApiKeyItem } from "../../types";
 
 const STATUS_TAG_MAP: Record<string, { color: string; label: string }> = {
-	active: { color: "green", label: "启用" },
-	revoked: { color: "red", label: "已撤销" },
-	expired: { color: "default", label: "已过期" },
+	active: { color: "green", label: "Active" },
+	revoked: { color: "red", label: "Revoked" },
+	expired: { color: "default", label: "Expired" },
 };
 
 interface ApiKeyTableProps {
@@ -22,16 +22,16 @@ export const ApiKeyTable = ({ dataSource, loading, onRevoke, onDelete }: ApiKeyT
 	const handleCopyPrefix = useCallback(
 		(prefix: string) => {
 			navigator.clipboard.writeText(prefix);
-			message.success("已复制");
+			message.success("Copied");
 		},
 		[message],
 	);
 
 	const columns = useMemo<ColumnsType<ApiKeyItem>>(
 		() => [
-			{ title: "名称", dataIndex: "name", width: 160, ellipsis: true },
+			{ title: "Name", dataIndex: "name", width: 160, ellipsis: true },
 			{
-				title: "Key 前缀",
+				title: "Key Prefix",
 				dataIndex: "keyPrefix",
 				width: 180,
 				render: (prefix: string) => (
@@ -41,7 +41,7 @@ export const ApiKeyTable = ({ dataSource, loading, onRevoke, onDelete }: ApiKeyT
 				),
 			},
 			{
-				title: "权限范围",
+				title: "Scopes",
 				dataIndex: "scopes",
 				width: 200,
 				render: (scopes: string[]) => (
@@ -53,7 +53,7 @@ export const ApiKeyTable = ({ dataSource, loading, onRevoke, onDelete }: ApiKeyT
 				),
 			},
 			{
-				title: "状态",
+				title: "Status",
 				dataIndex: "status",
 				width: 100,
 				align: "center",
@@ -63,29 +63,29 @@ export const ApiKeyTable = ({ dataSource, loading, onRevoke, onDelete }: ApiKeyT
 				},
 			},
 			{
-				title: "最后使用",
+				title: "Last Used",
 				dataIndex: "lastUsedAt",
 				width: 180,
 				render: (v: string | null) => v ?? "—",
 			},
-			{ title: "创建时间", dataIndex: "createdAt", width: 180 },
+			{ title: "Created", dataIndex: "createdAt", width: 180 },
 			{
-				title: "操作",
+				title: "Actions",
 				width: 160,
 				fixed: "right",
 				align: "center",
 				render: (_: unknown, record: ApiKeyItem) => (
 					<Space>
 						{record.status === "active" && (
-							<Popconfirm title="确认撤销该 Key？撤销后不可恢复。" onConfirm={() => onRevoke(record.id)}>
+							<Popconfirm title="Revoke this Key? This cannot be undone." onConfirm={() => onRevoke(record.id)}>
 								<Button type="link" className="p-0" danger>
-									撤销
+									Revoke
 								</Button>
 							</Popconfirm>
 						)}
-						<Popconfirm title="确认删除该 Key？" onConfirm={() => onDelete(record.id)}>
+						<Popconfirm title="Delete this Key?" onConfirm={() => onDelete(record.id)}>
 							<Button type="link" className="p-0" danger>
-								删除
+								Delete
 							</Button>
 						</Popconfirm>
 					</Space>
@@ -103,7 +103,7 @@ export const ApiKeyTable = ({ dataSource, loading, onRevoke, onDelete }: ApiKeyT
 			loading={loading}
 			pagination={{
 				pageSize: 10,
-				showTotal: (total) => `共 ${total} 条数据`,
+				showTotal: (total) => `${total} records`,
 			}}
 			bordered
 			size="middle"

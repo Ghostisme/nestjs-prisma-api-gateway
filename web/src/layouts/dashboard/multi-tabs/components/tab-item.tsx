@@ -11,12 +11,12 @@ export function TabItem({ tab, style, onClose }: TabItemProps) {
 	// const renderTabLabel = useTabLabelRender();
 	const menuItems: MenuProps["items"] = [
 		{
-			label: "刷新",
+			label: "Refresh",
 			key: MultiTabOperation.REFRESH,
 			icon: <Icon icon="mdi:reload" size={18} />,
 		},
 		{
-			label: "关闭标签页",
+			label: "Close tab",
 			key: MultiTabOperation.CLOSE,
 			icon: <Icon icon="material-symbols:close" size={18} />,
 			disabled: tabs.length === 1,
@@ -25,13 +25,13 @@ export function TabItem({ tab, style, onClose }: TabItemProps) {
 			type: "divider",
 		},
 		{
-			label: "关闭左侧标签页",
+			label: "Close tabs to the left",
 			key: MultiTabOperation.CLOSELEFT,
 			icon: <Icon icon="material-symbols:tab-close-right-outline" size={18} className="rotate-180" />,
 			disabled: tabs.findIndex((t) => t.key === tab.key) === 0,
 		},
 		{
-			label: "关闭右侧标签页",
+			label: "Close tabs to the right",
 			key: MultiTabOperation.CLOSERIGHT,
 			icon: <Icon icon="material-symbols:tab-close-right-outline" size={18} />,
 			disabled: tabs.findIndex((t) => t.key === tab.key) === tabs.length - 1,
@@ -40,13 +40,13 @@ export function TabItem({ tab, style, onClose }: TabItemProps) {
 			type: "divider",
 		},
 		{
-			label: "关闭其它标签页",
+			label: "Close other tabs",
 			key: MultiTabOperation.CLOSEOTHERS,
 			icon: <Icon icon="material-symbols:tab-close-outline" size={18} />,
 			disabled: tabs.length === 1,
 		},
 		{
-			label: "关闭所有标签页",
+			label: "Close all tabs",
 			key: MultiTabOperation.CLOSEALL,
 			icon: <Icon icon="mdi:collapse-all-outline" size={18} />,
 		},

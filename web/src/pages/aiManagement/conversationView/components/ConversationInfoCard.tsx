@@ -38,38 +38,38 @@ export const ConversationInfoCard = ({ info }: ConversationInfoCardProps): JSX.E
 			>
 				<div className="flex items-center gap-2">
 					<div className="w-1 h-5 rounded-full" style={{ background: "var(--colors-palette-primary-default)" }} />
-					<h3 className="text-base font-bold text-[var(--foreground)]">基本信息</h3>
+					<h3 className="text-base font-bold text-[var(--foreground)]">Basic Info</h3>
 				</div>
 			</div>
 
 			<div className="px-6 py-4 space-y-4">
 				<div className="flex flex-wrap items-center gap-x-8 gap-y-3">
-					<InfoItem icon="lucide:message-square" label="对话标题" value={info.dialogTitle} highlight />
-					<InfoItem icon="lucide:cpu" label="使用Model" value={info.model} highlight />
-					<InfoItem icon="lucide:bot" label="使用Agent" value={info.agent} highlight />
+					<InfoItem icon="lucide:message-square" label="Title" value={info.dialogTitle} highlight />
+					<InfoItem icon="lucide:cpu" label="Model" value={info.model} highlight />
+					<InfoItem icon="lucide:bot" label="Agent" value={info.agent} highlight />
 				</div>
 
 				<div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-					<StatMini label="总消息数" value={`${info.totalMessages}条`} />
-					<StatMini label="用户消息" value={`${info.userMessages}条`} />
-					<StatMini label="Agent消息" value={`${info.agentMessages}条`} />
-					<StatMini label="用户满意度" value={info.userSatisfaction} accent />
-					<StatMini label="对话时长" value={info.duration} />
-					<StatMini label="消耗Token" value={info.consumeToken.toLocaleString()} />
+					<StatMini label="Total Messages" value={`${info.totalMessages}`} />
+					<StatMini label="User Messages" value={`${info.userMessages}`} />
+					<StatMini label="Agent Messages" value={`${info.agentMessages}`} />
+					<StatMini label="Satisfaction" value={info.userSatisfaction} accent />
+					<StatMini label="Duration" value={info.duration} />
+					<StatMini label="Tokens" value={info.consumeToken.toLocaleString()} />
 				</div>
 
 				<div className="flex flex-wrap items-center gap-x-8 gap-y-2 text-xs text-[var(--muted-foreground)]">
 					<span>
 						<Icon icon="lucide:clock" size={13} className="mr-1 inline-block align-middle" />
-						开始时间 <strong className="text-[var(--foreground)] ml-1">{info.startTime}</strong>
+						Started <strong className="text-[var(--foreground)] ml-1">{info.startTime}</strong>
 					</span>
 					<span>
 						<Icon icon="lucide:clock" size={13} className="mr-1 inline-block align-middle" />
-						结束时间 <strong className="text-[var(--foreground)] ml-1">{info.endTime}</strong>
+						Ended <strong className="text-[var(--foreground)] ml-1">{info.endTime}</strong>
 					</span>
 					<span>
 						<Icon icon="lucide:zap" size={13} className="mr-1 inline-block align-middle" />
-						平均响应时长 <strong className="text-[var(--foreground)] ml-1">{info.avgResponseTime}</strong>
+						Avg Response <strong className="text-[var(--foreground)] ml-1">{info.avgResponseTime}</strong>
 					</span>
 				</div>
 			</div>

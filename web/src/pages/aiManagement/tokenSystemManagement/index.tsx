@@ -42,11 +42,11 @@ const filterTree = (node: TreeNode, keyword: string): TreeNode | null => {
 
 const renderQuotaTag = (member: OrgMember): JSX.Element => {
 	if (member.remainToken === -1 || member.tokenQuota === -1) {
-		return <Tag color="gold">不限制</Tag>;
+		return <Tag color="gold">Unlimited</Tag>;
 	}
 	return (
 		<Tag color="blue">
-			可使用 {member.remainToken ?? 0} / {member.tokenQuota}
+			Available {member.remainToken ?? 0} / {member.tokenQuota}
 		</Tag>
 	);
 };
@@ -122,10 +122,10 @@ export default function TokenSystemManagementPage(): JSX.Element {
 		async (payload: TokenConfigPayload): Promise<void> => {
 			if (configModal.scope === "node") {
 				await aiManagementService.configureNodeToken(configModal.targetId, payload);
-				message.success("部门Token配额已更新");
+				message.success("Department token quota updated");
 			} else {
 				await aiManagementService.configureMemberToken(configModal.targetId, payload);
-				message.success("个人Token配额已更新");
+				message.success("Member token quota updated");
 			}
 			setConfigModal((prev) => ({ ...prev, open: false }));
 			queryClient.invalidateQueries({ queryKey: ["token-system-org-tree"] });
@@ -143,14 +143,14 @@ export default function TokenSystemManagementPage(): JSX.Element {
 					title={
 						<div className="flex items-center gap-2">
 							<Icon icon="ph:buildings" size={16} />
-							<span>组织架构</span>
+							<span>Organization</span>
 						</div>
 					}
 				>
 					<Input
 						allowClear
 						size="small"
-						placeholder="搜索部门"
+						placeholder="Search department"
 						prefix={<Icon icon="ph:magnifying-glass" size={14} />}
 						value={searchKeyword}
 						onChange={(e) => setSearchKeyword(e.target.value)}
@@ -167,7 +167,7 @@ export default function TokenSystemManagementPage(): JSX.Element {
 								onSelect={handleSelectNode}
 							/>
 						) : (
-							<Empty description="暂无数据" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+							<Empty description="No data" image={Empty.PRESENTED_IMAGE_SIMPLE} />
 						)}
 					</Spin>
 				</Card>
@@ -185,7 +185,7 @@ export default function TokenSystemManagementPage(): JSX.Element {
 										/>
 										<span className="text-lg font-semibold">{nodeDetail.nodeName}</span>
 										<Tag color={nodeDetail.nodeType === "company" ? "purple" : "blue"}>
-											{nodeDetail.nodeType === "company" ? "公司" : "部门"}
+											{nodeDetail.nodeType === "company" ? "Company" : "Department"}
 										</Tag>
 									</div>
 									{nodeDetail.nodeType === "department" && (
@@ -195,7 +195,7 @@ export default function TokenSystemManagementPage(): JSX.Element {
 												icon={<Icon icon="ph:gear" size={14} />}
 												onClick={() => handleOpenNodeConfig(nodeDetail.nodeId, nodeDetail.nodeName)}
 											>
-												配置部门Token数
+												Configure Dept Tokens
 											</Button>
 										</AuthGuard>
 									)}
@@ -203,7 +203,7 @@ export default function TokenSystemManagementPage(): JSX.Element {
 
 								{nodeDetail.directMembers.length > 0 && (
 									<div>
-										<div className="text-sm font-medium mb-2 text-[var(--foreground)]">直属成员</div>
+										<div className="text-sm font-medium mb-2 text-[var(--foreground)]">Direct Members</div>
 										<List
 											bordered
 											dataSource={nodeDetail.directMembers}
@@ -219,7 +219,7 @@ export default function TokenSystemManagementPage(): JSX.Element {
 																size="small"
 																onClick={() => handleOpenMemberConfig(member.memberId, member.memberName)}
 															>
-																管理配额
+																Manage Quota
 															</Button>
 														</AuthGuard>,
 													]}
@@ -250,7 +250,7 @@ export default function TokenSystemManagementPage(): JSX.Element {
 
 								{nodeDetail.subDepartments.length > 0 && (
 									<div>
-										<div className="text-sm font-medium mb-2 text-[var(--foreground)]">下级部门</div>
+										<div className="text-sm font-medium mb-2 text-[var(--foreground)]">Sub-departments</div>
 										<List
 											bordered
 											dataSource={nodeDetail.subDepartments}
@@ -262,7 +262,7 @@ export default function TokenSystemManagementPage(): JSX.Element {
 															check={LMX_ADMIN_PERMISSIONS.aiManagement_tokenSystemManagement_viewDetail}
 														>
 															<Button size="small" onClick={() => setSelectedNodeId(dept.nodeId)}>
-																查看详情
+																View Details
 															</Button>
 														</AuthGuard>,
 														<AuthGuard
@@ -274,7 +274,7 @@ export default function TokenSystemManagementPage(): JSX.Element {
 																size="small"
 																onClick={() => handleOpenNodeConfig(dept.nodeId, dept.nodeName)}
 															>
-																配置部门Token数
+																Configure Dept Tokens
 															</Button>
 														</AuthGuard>,
 													]}
@@ -293,10 +293,10 @@ export default function TokenSystemManagementPage(): JSX.Element {
 														title={
 															<div className="flex items-center gap-2">
 																<span>{dept.nodeName}</span>
-																<Tag>{dept.memberCount} 人</Tag>
+																<Tag>{dept.memberCount} members</Tag>
 															</div>
 														}
-														description="点击查看详情可进入该部门成员列表"
+														description="Click View Details to see this department's members"
 													/>
 												</List.Item>
 											)}
@@ -305,11 +305,11 @@ export default function TokenSystemManagementPage(): JSX.Element {
 								)}
 
 								{nodeDetail.directMembers.length === 0 && nodeDetail.subDepartments.length === 0 && (
-									<Empty description="该节点下暂无成员和下级部门" />
+									<Empty description="No members or sub-departments under this node" />
 								)}
 							</div>
 						) : (
-							<Empty description="请选择左侧部门查看详情" />
+							<Empty description="Select a department on the left to view details" />
 						)}
 					</Spin>
 				</Card>

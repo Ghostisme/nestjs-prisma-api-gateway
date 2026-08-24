@@ -57,7 +57,7 @@ export function MaterialVideoPreviewCard({
 		<div className="relative z-[2] flex cursor-pointer shrink-0 items-center justify-center" style={{ width, height }}>
 			<button
 				type="button"
-				aria-label={`播放视频：${row.name}`}
+				aria-label={`Play video: ${row.name}`}
 				className="absolute inset-0 z-[66] border-0 bg-transparent p-0"
 				style={{ borderRadius }}
 				onClick={() => onPlay?.({ url: objectUrl, title: row.name, row })}

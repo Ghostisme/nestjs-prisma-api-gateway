@@ -11,19 +11,19 @@ export type PartnerEnterpriseProductFunction =
 	| "ai";
 
 export const PARTNER_ENTERPRISE_STATUS_OPTIONS = [
-	{ label: "启用", value: 0 },
-	{ label: "禁用", value: 1 },
+	{ label: "Enabled", value: 0 },
+	{ label: "Disabled", value: 1 },
 ];
 
 export const PARTNER_ENTERPRISE_PRODUCT_FUNCTION_OPTIONS = [
 	/**
 	 * 星动达人舱
 	 */
-	{ label: "星动达人舱", value: "talent" },
+	{ label: "Talent Hub", value: "talent" },
 	/**
 	 * 嘉鹿AI平台
 	 */
-	{ label: "嘉鹿AI平台", value: "ai" },
+	{ label: "AI Platform", value: "ai" },
 ];
 
 export const PARTNER_ENTERPRISE_USER_MODAL_MODE = {
@@ -48,15 +48,15 @@ export const PARTNER_ENTERPRISE_USER_MODAL_TITLE_MAP: Record<PartnerEnterpriseUs
 	/**
 	 * 创建企业账号
 	 */
-	[PARTNER_ENTERPRISE_USER_MODAL_MODE.CREATE]: "创建企业账号",
+	[PARTNER_ENTERPRISE_USER_MODAL_MODE.CREATE]: "Create Account",
 	/**
 	 * 编辑企业账号
 	 */
-	[PARTNER_ENTERPRISE_USER_MODAL_MODE.EDIT]: "编辑企业账号",
+	[PARTNER_ENTERPRISE_USER_MODAL_MODE.EDIT]: "Edit Account",
 	/**
 	 * 查看企业账号
 	 */
-	[PARTNER_ENTERPRISE_USER_MODAL_MODE.VIEW]: "查看企业账号",
+	[PARTNER_ENTERPRISE_USER_MODAL_MODE.VIEW]: "View Account",
 };
 
 export const PARTNER_ENTERPRISE_PRODUCT_BUSINESS_CODE_MAP: Record<PartnerEnterpriseProductFunction, string> = {
@@ -74,15 +74,15 @@ export const PARTNER_ENTERPRISE_AI_FUNCTION_OPTIONS = [
 	/**
 	 * AI智能对话
 	 */
-	{ label: "AI智能对话", value: 1001 },
+	{ label: "AI Chat", value: 1001 },
 	/**
 	 * AI智能投流
 	 */
-	{ label: "AI智能投流", value: 1002 },
+	{ label: "AI Ad Delivery", value: 1002 },
 	/**
 	 * AI内容工厂
 	 */
-	{ label: "AI内容工厂", value: 1003 },
+	{ label: "AI Content Factory", value: 1003 },
 ];
 
 export const PARTNER_ENTERPRISE_LEGACY_AI_FUNCTION_CODE_MAP: Record<string, number> = {
@@ -102,13 +102,13 @@ export const PARTNER_ENTERPRISE_LEGACY_AI_FUNCTION_CODE_MAP: Record<string, numb
 
 const PARTNER_ENTERPRISE_DEFAULT_BACKEND_MODULE_TREE: DataNode[] = [
 	{
-		title: "全选",
+		title: "Select All",
 		key: "all",
 		children: [
-			{ title: "AI监控数据看板", key: "ai_dashboard" },
-			{ title: "AI质量管理中心", key: "ai_management" },
-			{ title: "AI质量知识中心", key: "ai_knowledge" },
-			{ title: "账号管理中心", key: "account_management" },
+			{ title: "AI Monitoring Dashboard", key: "ai_dashboard" },
+			{ title: "AI Quality Management Center", key: "ai_management" },
+			{ title: "AI Quality Knowledge Center", key: "ai_knowledge" },
+			{ title: "Account Management Center", key: "account_management" },
 		],
 	},
 ];

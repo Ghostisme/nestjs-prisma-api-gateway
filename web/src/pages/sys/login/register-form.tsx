@@ -35,17 +35,17 @@ function RegisterForm() {
 		<Form {...form}>
 			<form onSubmit={form.handleSubmit(onFinish)} className="space-y-4">
 				<div className="flex flex-col items-center gap-2 text-center">
-					<h1 className="text-2xl font-bold">注册</h1>
+					<h1 className="text-2xl font-bold">Sign up</h1>
 				</div>
 
 				<FormField
 					control={form.control}
 					name="username"
-					rules={{ required: "请输入账号" }}
+					rules={{ required: "Enter your username" }}
 					render={({ field }) => (
 						<FormItem>
 							<FormControl>
-								<Input placeholder="账号" {...field} />
+								<Input placeholder="Username" {...field} />
 							</FormControl>
 							<FormMessage />
 						</FormItem>
@@ -55,11 +55,11 @@ function RegisterForm() {
 				<FormField
 					control={form.control}
 					name="email"
-					rules={{ required: "请输入邮箱" }}
+					rules={{ required: "Enter your email" }}
 					render={({ field }) => (
 						<FormItem>
 							<FormControl>
-								<Input placeholder="邮箱" {...field} />
+								<Input placeholder="Email" {...field} />
 							</FormControl>
 							<FormMessage />
 						</FormItem>
@@ -69,11 +69,11 @@ function RegisterForm() {
 				<FormField
 					control={form.control}
 					name="password"
-					rules={{ required: "请输入密码" }}
+					rules={{ required: "Enter your password" }}
 					render={({ field }) => (
 						<FormItem>
 							<FormControl>
-								<Input type="password" placeholder="密码" {...field} />
+								<Input type="password" placeholder="Password" {...field} />
 							</FormControl>
 							<FormMessage />
 						</FormItem>
@@ -84,13 +84,13 @@ function RegisterForm() {
 					control={form.control}
 					name="confirmPassword"
 					rules={{
-						required: "请输入确认密码",
-						validate: (value) => value === form.getValues("password") || "两次输入密码不一致",
+						required: "Confirm your password",
+						validate: (value) => value === form.getValues("password") || "Passwords do not match",
 					}}
 					render={({ field }) => (
 						<FormItem>
 							<FormControl>
-								<Input type="password" placeholder="确认密码" {...field} />
+								<Input type="password" placeholder="Confirm password" {...field} />
 							</FormControl>
 							<FormMessage />
 						</FormItem>
@@ -98,17 +98,17 @@ function RegisterForm() {
 				/>
 
 				<Button type="submit" className="w-full">
-					注册
+					Sign up
 				</Button>
 
 				<div className="mb-2 text-xs text-gray">
-					<span>注册即我同意</span>
+					<span>By signing up, I agree to the</span>
 					<a href="./" className="text-sm underline! text-primary!">
-						{" 服务条款 "}
+						{" Terms of Service "}
 					</a>
 					{" & "}
 					<a href="./" className="text-sm underline! text-primary!">
-						{" 隐私政策 "}
+						{" Privacy Policy "}
 					</a>
 				</div>
 

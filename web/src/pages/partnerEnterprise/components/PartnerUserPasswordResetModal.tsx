@@ -56,7 +56,7 @@ export default function PartnerUserPasswordResetModal({
 
 	const handleResetPassword = useCallback(async (): Promise<void> => {
 		if (partnerId === null) {
-			message.error("缺少合作企业ID");
+			message.error("Partner enterprise ID is missing");
 			return;
 		}
 
@@ -66,14 +66,14 @@ export default function PartnerUserPasswordResetModal({
 			const password = parseResetPassword(response);
 
 			if (!password) {
-				message.error("重置成功，但未获取到新密码");
+				message.error("Reset succeeded, but no new password was returned");
 				onOpenChange(false);
 				return;
 			}
 
 			setNextPassword(password);
 		} catch (error) {
-			message.error(getApiErrorMessage(error, "重置企业账号密码失败"));
+			message.error(getApiErrorMessage(error, "Failed to reset account password"));
 			onOpenChange(false);
 		} finally {
 			setLoading(false);
@@ -85,7 +85,7 @@ export default function PartnerUserPasswordResetModal({
 			return;
 		}
 
-		const copied = await copyFn(nextPassword, "新密码已复制");
+		const copied = await copyFn(nextPassword, "New password copied");
 		if (copied) {
 			onOpenChange(false);
 		}
@@ -93,7 +93,7 @@ export default function PartnerUserPasswordResetModal({
 
 	return (
 		<Modal
-			title="提示"
+			title="Notice"
 			open={open}
 			onCancel={handleClose}
 			width={520}
@@ -104,32 +104,32 @@ export default function PartnerUserPasswordResetModal({
 				isPasswordReady
 					? [
 							<Button key="copy-and-confirm" type="primary" onClick={() => void handleCopyAndConfirm()}>
-								复制并确认
+								Copy and Confirm
 							</Button>,
 						]
 					: [
 							<Button key="cancel" onClick={handleClose} disabled={loading}>
-								取消
+								Cancel
 							</Button>,
 							<Button key="confirm" type="primary" loading={loading} onClick={() => void handleResetPassword()}>
-								确认
+								OK
 							</Button>,
 						]
 			}
 		>
 			{isPasswordReady ? (
 				<div className="space-y-5 py-2">
-					<div className="text-base font-medium text-foreground">账号新密码</div>
+					<div className="text-base font-medium text-foreground">New Account Password</div>
 					<Input
 						readOnly
 						tabIndex={-1}
 						value={nextPassword}
 						className="h-14 text-[20px] font-semibold tracking-wide !shadow-none hover:!border-[#d9d9d9] focus:!border-[#d9d9d9] focus:!shadow-none"
 					/>
-					<div className="text-sm text-muted-foreground">请复制以上新密码并妥善保存。</div>
+					<div className="text-sm text-muted-foreground">Please copy the new password above and keep it safe.</div>
 				</div>
 			) : (
-				<div className="py-6 text-base text-foreground">确认重置该账号密码吗？</div>
+				<div className="py-6 text-base text-foreground">Reset this account's password?</div>
 			)}
 		</Modal>
 	);

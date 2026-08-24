@@ -12,7 +12,7 @@ export interface VideoPlayModalProps {
 	title?: string;
 }
 
-export function VideoPlayModal({ open, onClose, url, title = "视频预览" }: VideoPlayModalProps) {
+export function VideoPlayModal({ open, onClose, url, title = "Video preview" }: VideoPlayModalProps) {
 	return (
 		<Modal
 			title={title}
@@ -39,8 +39,8 @@ export function VideoPlayModal({ open, onClose, url, title = "视频预览" }: V
 						className="block w-full max-h-[70vh] outline-none"
 						style={{ objectFit: "contain" }}
 					>
-						<track kind="captions" src={EMPTY_VTT_TRACK} srcLang="zh-CN" label="中文字幕" default />
-						您的浏览器不支持视频播放
+						<track kind="captions" src={EMPTY_VTT_TRACK} srcLang="zh-CN" label="Captions" default />
+						Your browser does not support video playback
 					</video>
 				) : null}
 			</div>

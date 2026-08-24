@@ -70,12 +70,12 @@ export default function TokenUserManagementPage(): JSX.Element {
 			if (!selectedUser) return;
 			try {
 				await aiManagementService.updateQuota(selectedUser.id, type, value);
-				message.success("配额更新成功");
+				message.success("Quota updated");
 				setQuotaModalOpen(false);
 				queryClient.invalidateQueries({ queryKey: ["token-user-list"] });
 				queryClient.invalidateQueries({ queryKey: ["model-token-stats"] });
 			} catch (error) {
-				message.error(getApiErrorMessage(error, "配额更新失败"));
+				message.error(getApiErrorMessage(error, "Failed to update quota"));
 			}
 		},
 		[selectedUser, message, queryClient],
@@ -84,48 +84,49 @@ export default function TokenUserManagementPage(): JSX.Element {
 	const columns = useMemo<ColumnsType<TokenUserRecord>>(
 		() => [
 			{ title: "ID", dataIndex: "id", width: 60, align: "center" },
-			{ title: "姓名", dataIndex: "name", width: 100, align: "center" },
+			{ title: "Name", dataIndex: "name", width: 100, align: "center" },
 			{
-				title: "所属部门",
+				title: "Department",
 				dataIndex: "department",
 				width: 160,
 				align: "center",
 				render: (v: string) => v || "-",
 			},
 			{
-				title: "Token总配额",
+				title: "Total Quota",
 				dataIndex: "tokenQuota",
 				width: 120,
 				align: "center",
 				render: (v: number) => (v === -1 ? "∞" : v),
 			},
 			{
-				title: "已使用配额",
+				title: "Used",
 				dataIndex: "usedQuota",
 				width: 120,
 				align: "center",
 			},
 			{
-				title: "配额限制",
+				title: "Quota Limit",
 				dataIndex: "quotaLimit",
-				width: 80,
+				width: 90,
 				align: "center",
+				render: (v: string) => (v === "是" ? "Yes" : v === "否" ? "No" : v || "-"),
 			},
 			{
-				title: "用户满意度",
+				title: "Satisfaction",
 				dataIndex: "userSatisfaction",
 				width: 100,
 				align: "center",
 				render: (v: string) => v || "-",
 			},
 			{
-				title: "最近使用时间",
+				title: "Last Used",
 				dataIndex: "lastUsedTime",
 				width: 170,
 				align: "center",
 			},
 			{
-				title: "操作",
+				title: "Actions",
 				width: 280,
 				align: "center",
 				fixed: "right",
@@ -133,17 +134,17 @@ export default function TokenUserManagementPage(): JSX.Element {
 					<Space>
 						<AuthGuard check={LMX_ADMIN_PERMISSIONS.aiManagement_tokenUserManagement_manageQuota}>
 							<Button type="link" className="p-0" onClick={() => handleOpenQuotaModal(record)}>
-								管理配额
+								Manage Quota
 							</Button>
 						</AuthGuard>
 						<AuthGuard check={LMX_ADMIN_PERMISSIONS.aiManagement_tokenUserManagement_records}>
 							<Button type="link" className="p-0" onClick={() => handleOpenRecordsModal(record)}>
-								操作记录
+								History
 							</Button>
 						</AuthGuard>
 						<AuthGuard check={LMX_ADMIN_PERMISSIONS.aiManagement_tokenUserManagement_consumption}>
 							<Button type="link" className="p-0" onClick={() => handleOpenConsumptionModal(record)}>
-								查看消耗明细
+								Usage Detail
 							</Button>
 						</AuthGuard>
 					</Space>
@@ -163,7 +164,7 @@ export default function TokenUserManagementPage(): JSX.Element {
 							key={stat.modelName}
 							className="rounded-xl bg-[var(--card)] p-5 shadow-sm border border-[var(--border)]"
 						>
-							<div className="text-sm text-[var(--muted-foreground)] mb-1">{stat.modelName} token总消耗量</div>
+							<div className="text-sm text-[var(--muted-foreground)] mb-1">{stat.modelName} · Total Tokens</div>
 							<div className="text-2xl font-bold text-[var(--foreground)]">{stat.totalTokens.toLocaleString()}</div>
 						</div>
 					))}
@@ -173,9 +174,9 @@ export default function TokenUserManagementPage(): JSX.Element {
 				<div className="rounded-xl bg-[var(--card)] p-5 shadow-sm border border-[var(--border)]">
 					<div className="flex flex-wrap items-center gap-3 mb-4">
 						<div className="flex items-center gap-1">
-							<span className="text-sm shrink-0">姓名</span>
+							<span className="text-sm shrink-0">Name</span>
 							<Input
-								placeholder="请输入"
+								placeholder="Search"
 								className="w-28"
 								size="middle"
 								value={filterName}
@@ -184,9 +185,9 @@ export default function TokenUserManagementPage(): JSX.Element {
 							/>
 						</div>
 						<div className="flex items-center gap-1">
-							<span className="text-sm shrink-0">所属部门</span>
+							<span className="text-sm shrink-0">Department</span>
 							<Input
-								placeholder="请输入"
+								placeholder="Search"
 								className="w-28"
 								size="middle"
 								value={filterDept}
@@ -195,13 +196,13 @@ export default function TokenUserManagementPage(): JSX.Element {
 							/>
 						</div>
 						<div className="flex items-center gap-1">
-							<span className="text-sm shrink-0">配额限制</span>
+							<span className="text-sm shrink-0">Quota Limit</span>
 							<Select
-								placeholder="请选择"
+								placeholder="Select"
 								className="w-24"
 								options={[
-									{ label: "是", value: "是" },
-									{ label: "否", value: "否" },
+									{ label: "Yes", value: "是" },
+									{ label: "No", value: "否" },
 								]}
 								value={filterQuotaLimit}
 								onChange={setFilterQuotaLimit}
@@ -210,9 +211,9 @@ export default function TokenUserManagementPage(): JSX.Element {
 						</div>
 						<div className="flex items-center gap-1 ml-auto">
 							<Button type="primary" onClick={handleSearch}>
-								查询
+								Search
 							</Button>
-							<Button onClick={handleReset}>重置</Button>
+							<Button onClick={handleReset}>Reset</Button>
 						</div>
 					</div>
 
@@ -224,7 +225,7 @@ export default function TokenUserManagementPage(): JSX.Element {
 						pagination={{
 							pageSize: 10,
 							total: userList?.total,
-							showTotal: (total) => `共 ${total} 条数据`,
+							showTotal: (total) => `${total} records`,
 						}}
 						bordered
 						size="middle"

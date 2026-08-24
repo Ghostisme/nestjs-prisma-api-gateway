@@ -97,7 +97,7 @@ function MarkPage() {
 				name: fieldName,
 				label: item.name,
 				type: "select" as const,
-				placeholder: "请选择",
+				placeholder: "Select",
 				options,
 			};
 		});
@@ -137,7 +137,7 @@ function MarkPage() {
 	}, []);
 
 	const handleDownload = useCallback(async (record: MaterialRow) => {
-		message.success("视频下载中，请稍后...");
+		message.success("Downloading video, please wait...");
 		await downloadMaterial(record, (row) => materialService.getMaterialDownloadUrl({ id: row.id }));
 	}, []);
 
@@ -149,9 +149,9 @@ function MarkPage() {
 				await materialService.deleteMaterial({ id: record.id });
 				onSuccess?.();
 				tableActionRef.current?.reload();
-				message.success("删除成功");
+				message.success("Deleted");
 			} catch (error) {
-				message.error(getRequestErrorMessage(error, "删除失败"));
+				message.error(getRequestErrorMessage(error, "Delete failed"));
 			} finally {
 				setRowMutating(false);
 			}
@@ -162,10 +162,10 @@ function MarkPage() {
 	const handleDeleteWithConfirm = useCallback(
 		(record: MaterialRow) => {
 			Modal.confirm({
-				title: "提示",
-				content: "确定删除吗?",
-				okText: "确定",
-				cancelText: "取消",
+				title: "Notice",
+				content: "Are you sure you want to delete?",
+				okText: "OK",
+				cancelText: "Cancel",
 				centered: true,
 				onOk: () => handleDelete(record),
 			});
@@ -183,16 +183,16 @@ function MarkPage() {
 			const response = await materialService.batchDeleteMaterials({
 				ids: batchDeleteDialog.rows.map((row) => row.id),
 			});
-			ensureApiSuccess(response, "批量删除失败");
+			ensureApiSuccess(response, "Batch delete failed");
 			if (batchDeleteDialog.onSuccess) {
 				batchDeleteDialog.onSuccess();
 			} else {
 				tableActionRef.current?.reload();
 			}
-			message.success("批量删除成功");
+			message.success("Batch deleted");
 			batchDeleteDialog.resetDialog();
 		} catch (error) {
-			message.error(getRequestErrorMessage(error, "批量删除失败"));
+			message.error(getRequestErrorMessage(error, "Batch delete failed"));
 		} finally {
 			batchDeleteDialog.setLoading(false);
 		}
@@ -209,10 +209,10 @@ function MarkPage() {
 				materialService.getMaterialDownloadUrl({ id: row.id }),
 			);
 			batchDownloadDialog.onSuccess?.();
-			message.success("批量下载已开始");
+			message.success("Batch download started");
 			batchDownloadDialog.resetDialog();
 		} catch (error) {
-			message.error(getRequestErrorMessage(error, "批量下载失败"));
+			message.error(getRequestErrorMessage(error, "Batch download failed"));
 		} finally {
 			batchDownloadDialog.setLoading(false);
 		}
@@ -229,7 +229,7 @@ function MarkPage() {
 				render: () => null,
 			},
 			{
-				title: "视频",
+				title: "Video",
 				dataIndex: "video",
 				key: "video",
 				width: 320,
@@ -246,7 +246,7 @@ function MarkPage() {
 										style={{ background: "#165DFF" }}
 									>
 										<Icon icon="noto:red-heart" className="size-3" />
-										优质
+										Premium
 									</span>
 								)}
 								{record.quality === 1 && (
@@ -255,7 +255,7 @@ function MarkPage() {
 										style={{ background: "#F53F3F" }}
 									>
 										<Icon icon="noto:warning" className="size-3" />
-										劣质
+										Inferior
 									</span>
 								)}
 								{record.status === "marking_review_in_progress" && (
@@ -266,7 +266,7 @@ function MarkPage() {
 											backgroundColor: "rgba(255, 125, 0, 0.2)",
 										}}
 									>
-										审核中
+										Under Review
 									</span>
 								)}
 								{record.status === "revision_pending_review" && (
@@ -277,7 +277,7 @@ function MarkPage() {
 											backgroundColor: "rgba(255, 125, 0, 0.2)",
 										}}
 									>
-										标签修正审核中
+										Tag revision under review
 									</span>
 								)}
 							</>
@@ -297,7 +297,7 @@ function MarkPage() {
 			// 	},
 			// },
 			{
-				title: "AI 标签",
+				title: "AI Tags",
 				dataIndex: "aiTags",
 				key: "aiTags",
 				width: 160,
@@ -305,7 +305,7 @@ function MarkPage() {
 				render: (_: unknown, record: MaterialRow) => <TableTags tags={record.aiTags} />,
 			},
 			{
-				title: "人工标签",
+				title: "Manual Tags",
 				dataIndex: "currentTags",
 				key: "currentTags",
 				width: 160,
@@ -313,14 +313,14 @@ function MarkPage() {
 				render: (_: unknown, record: MaterialRow) => <TableTags tags={record.currentTags} />,
 			},
 			{
-				title: "拍摄人",
+				title: "Photographer",
 				dataIndex: "photographer",
 				key: "photographer",
 				width: 100,
 				render: (v: unknown) => (v ? String(v) : "-"),
 			},
 			{
-				title: "下载数",
+				title: "Downloads",
 				dataIndex: "downloadCount",
 				key: "downloadCount",
 				width: 80,
@@ -328,7 +328,7 @@ function MarkPage() {
 				render: (v: unknown) => (v != null ? String(v) : "0"),
 			},
 			{
-				title: "最近下载时间",
+				title: "Last Downloaded",
 				dataIndex: "lastDownloadTime",
 				key: "lastDownloadTime",
 				width: 140,
@@ -337,7 +337,7 @@ function MarkPage() {
 				},
 			},
 			{
-				title: "拍摄时间",
+				title: "Shoot Time",
 				dataIndex: "shootTime",
 				key: "shootTime",
 				width: 120,
@@ -346,7 +346,7 @@ function MarkPage() {
 				},
 			},
 			{
-				title: "状态",
+				title: "Status",
 				dataIndex: "status",
 				key: "status",
 				width: 200,

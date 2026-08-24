@@ -29,21 +29,21 @@ export default function SubscriptionPage(): JSX.Element {
 		if (!confirmPlan) return;
 		try {
 			await subscriptionService.changePlan({ planTier: confirmPlan.tier });
-			message.success(`已切换至「${confirmPlan.name}」`);
+			message.success(`Switched to "${confirmPlan.name}"`);
 			setConfirmPlan(null);
 		} catch (error) {
-			message.error(getApiErrorMessage(error, "套餐变更失败"));
+			message.error(getApiErrorMessage(error, "Plan change failed"));
 		}
 	}, [confirmPlan, message]);
 
 	return (
 		<div className="space-y-6">
-			<h2 className="text-lg font-semibold text-[var(--foreground)]">订阅管理</h2>
+			<h2 className="text-lg font-semibold text-[var(--foreground)]">Subscription Management</h2>
 
 			<CurrentPlanCard subscription={subscription ?? null} loading={subLoading} />
 
 			<div className="rounded-xl bg-[var(--card)] p-5 shadow-sm border border-[var(--border)]">
-				<h3 className="text-base font-medium text-[var(--foreground)] mb-4">套餐对比</h3>
+				<h3 className="text-base font-medium text-[var(--foreground)] mb-4">Plan Comparison</h3>
 				<PlanCompareTable
 					plans={plans ?? []}
 					currentTier={subscription?.planTier}
@@ -53,20 +53,20 @@ export default function SubscriptionPage(): JSX.Element {
 			</div>
 
 			<Modal
-				title="确认变更套餐"
+				title="Confirm Plan Change"
 				open={!!confirmPlan}
 				onCancel={() => setConfirmPlan(null)}
 				onOk={handleConfirmChange}
-				okText="确认变更"
-				cancelText="取消"
+				okText="Confirm Change"
+				cancelText="Cancel"
 			>
 				{confirmPlan && (
 					<div className="py-2 space-y-2">
 						<p>
-							确认将套餐从 <strong>{subscription?.planName}</strong> 变更为 <strong>{confirmPlan.name}</strong>？
+							Change plan from <strong>{subscription?.planName}</strong> to <strong>{confirmPlan.name}</strong>?
 						</p>
 						<p className="text-[var(--muted-foreground)] text-sm">
-							变更后将在下个计费周期生效，月费为 ¥{confirmPlan.priceMonthly}。
+							The change takes effect next billing cycle. Monthly price: ¥{confirmPlan.priceMonthly}.
 						</p>
 					</div>
 				)}

@@ -72,22 +72,22 @@ export default function ModelPage() {
 				},
 			},
 			columns: [
-				{ title: "品牌ID", dataIndex: "brandId", width: 100 },
+				{ title: "Brand ID", dataIndex: "brandId", width: 100 },
 				{
-					title: "品牌logo",
+					title: "Brand Logo",
 					dataIndex: "brandLogo",
 					width: 100,
 					render: (url: any) => <Avatar src={url} shape="square" />,
 				},
-				{ title: "品牌名称", dataIndex: "brandName", width: 200 },
+				{ title: "Brand Name", dataIndex: "brandName", width: 200 },
 				{
-					title: "品牌状态",
+					title: "Brand Status",
 					dataIndex: "brandStatus",
 					width: 100,
-					render: (status) => <Tag color={status === 1 ? "success" : "default"}>{status === 1 ? "上线" : "下线"}</Tag>,
+					render: (status) => <Tag color={status === 1 ? "success" : "default"}>{status === 1 ? "Online" : "Offline"}</Tag>,
 				},
 				{
-					title: "车型数量",
+					title: "Model Count",
 					dataIndex: "modelCount",
 					width: 120,
 					render: (num: any, record) => (
@@ -103,9 +103,9 @@ export default function ModelPage() {
 						</Button>
 					),
 				},
-				{ title: "更新时间", dataIndex: "updateTime", width: 180 },
+				{ title: "Updated", dataIndex: "updateTime", width: 180 },
 				{
-					title: "操作",
+					title: "Actions",
 					key: "action",
 					dataIndex: "action",
 					width: 150,
@@ -119,7 +119,7 @@ export default function ModelPage() {
 								setCreateBrandModelVisible(true);
 							}}
 						>
-							添加车型
+							Add Car Model
 						</Button>
 					),
 				},
@@ -130,30 +130,30 @@ export default function ModelPage() {
 				fields: [
 					{
 						name: "brandId",
-						label: "所属品牌",
+						label: "Brand",
 						type: "select",
 						options: brandOptions,
 					},
 					{
 						name: "modelName",
-						label: "车型名称",
+						label: "Car Model Name",
 						type: "input",
-						placeholder: "请输入车型名称",
+						placeholder: "Enter car model name",
 					},
 					{
 						name: "modelType",
-						label: "车型类型",
+						label: "Model Type",
 						type: "select",
 						options: [
 							// 1-指定车型，2-全国，3-区域
-							{ label: "指定车型", value: 1 },
-							{ label: "全国", value: 2 },
-							{ label: "区域", value: 3 },
+							{ label: "Specified Model", value: 1 },
+							{ label: "National", value: 2 },
+							{ label: "Regional", value: 3 },
 						],
 					},
 					{
 						name: "joinTime",
-						label: "加入时间",
+						label: "Join Time",
 						type: "daterange",
 						itemStyle: { gridColumn: "span 1 / span 1" },
 						submitAs: { start: "joinStartTime", end: "joinEndTime" },
@@ -166,7 +166,7 @@ export default function ModelPage() {
 				...tableCfg.toolbar,
 				customActions: [
 					{
-						text: "新建品牌车型",
+						text: "New Brand Model",
 						icon: <Icon icon="gg:add" />,
 						type: "primary",
 						onClick: () => {
@@ -175,7 +175,7 @@ export default function ModelPage() {
 						},
 					},
 					{
-						text: "导出品牌车型数据",
+						text: "Export Brand Models",
 						icon: <Icon icon="solar:export-linear" />,
 						type: "default",
 						onClick: exportBrandModelData,

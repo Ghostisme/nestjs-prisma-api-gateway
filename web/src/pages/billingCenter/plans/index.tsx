@@ -26,64 +26,64 @@ export default function PlansPage(): JSX.Element {
 		try {
 			const next = plan.status === "active" ? "inactive" : "active";
 			await subscriptionService.updatePlanStatus(plan.id, next);
-			message.success(`已${next === "active" ? "启用" : "停用"} ${plan.name}`);
+			message.success(`${next === "active" ? "Enabled" : "Disabled"} ${plan.name}`);
 		} catch (error) {
-			message.error(getApiErrorMessage(error, "操作失败"));
+			message.error(getApiErrorMessage(error, "Operation failed"));
 		}
 	};
 
 	const columns = useMemo<ColumnsType<PlanConfig>>(
 		() => [
-			{ title: "排序", dataIndex: "sortOrder", width: 70, align: "center" },
-			{ title: "套餐名称", dataIndex: "name", width: 120 },
+			{ title: "Order", dataIndex: "sortOrder", width: 70, align: "center" },
+			{ title: "Plan Name", dataIndex: "name", width: 120 },
 			{
-				title: "等级",
+				title: "Tier",
 				dataIndex: "tier",
 				width: 110,
 				align: "center",
 				render: (tier: string) => <Tag color={TIER_COLORS[tier] ?? "default"}>{tier.toUpperCase()}</Tag>,
 			},
 			{
-				title: "月费（元）",
+				title: "Monthly Price (¥)",
 				dataIndex: "priceMonthly",
 				width: 120,
 				align: "right",
-				render: (v: number) => (v === 0 ? "免费" : `¥${v.toLocaleString()}`),
+				render: (v: number) => (v === 0 ? "Free" : `¥${v.toLocaleString()}`),
 			},
 			{
-				title: "月 Token 限额",
+				title: "Monthly Token Limit",
 				dataIndex: "tokenLimitMonthly",
 				width: 140,
 				align: "right",
-				render: (v: number) => (v === -1 ? "无限制" : v.toLocaleString()),
+				render: (v: number) => (v === -1 ? "Unlimited" : v.toLocaleString()),
 			},
-			{ title: "并发限制", dataIndex: "concurrentLimit", width: 100, align: "center" },
-			{ title: "描述", dataIndex: "description", width: 180, ellipsis: true },
+			{ title: "Concurrency Limit", dataIndex: "concurrentLimit", width: 100, align: "center" },
+			{ title: "Description", dataIndex: "description", width: 180, ellipsis: true },
 			{
-				title: "状态",
+				title: "Status",
 				dataIndex: "status",
 				width: 90,
 				align: "center",
 				render: (s: string) => (
-					<Tag color={s === "active" ? "green" : "default"}>{s === "active" ? "启用" : "停用"}</Tag>
+					<Tag color={s === "active" ? "green" : "default"}>{s === "active" ? "Enabled" : "Disabled"}</Tag>
 				),
 			},
 			{
-				title: "操作",
+				title: "Actions",
 				width: 160,
 				fixed: "right",
 				align: "center",
 				render: (_: unknown, record: PlanConfig) => (
 					<Space>
 						<Button type="link" className="p-0" onClick={() => setSelectedPlan(record)}>
-							查看
+							View
 						</Button>
 						<Popconfirm
-							title={`确认${record.status === "active" ? "停用" : "启用"}该套餐？`}
+							title={`${record.status === "active" ? "Disable" : "Enable"} this plan?`}
 							onConfirm={() => handleToggleStatus(record)}
 						>
 							<Button type="link" className="p-0" danger={record.status === "active"}>
-								{record.status === "active" ? "停用" : "启用"}
+								{record.status === "active" ? "Disable" : "Enable"}
 							</Button>
 						</Popconfirm>
 					</Space>
@@ -95,7 +95,7 @@ export default function PlansPage(): JSX.Element {
 
 	return (
 		<div className="space-y-4">
-			<h2 className="text-lg font-semibold text-[var(--foreground)]">套餐配置</h2>
+			<h2 className="text-lg font-semibold text-[var(--foreground)]">Plan Configuration</h2>
 
 			<div className="rounded-xl bg-[var(--card)] p-5 shadow-sm border border-[var(--border)]">
 				<Table<PlanConfig>
@@ -112,28 +112,28 @@ export default function PlansPage(): JSX.Element {
 
 			{selectedPlan && (
 				<Card
-					title={`套餐详情 — ${selectedPlan.name}`}
+					title={`Plan Details — ${selectedPlan.name}`}
 					extra={
 						<Button type="link" onClick={() => setSelectedPlan(null)}>
-							关闭
+							Close
 						</Button>
 					}
 					className="border border-[var(--border)]"
 				>
 					<Descriptions column={{ xs: 1, sm: 2 }} bordered size="small">
-						<Descriptions.Item label="套餐名称">{selectedPlan.name}</Descriptions.Item>
-						<Descriptions.Item label="等级">
+						<Descriptions.Item label="Plan Name">{selectedPlan.name}</Descriptions.Item>
+						<Descriptions.Item label="Tier">
 							<Tag color={TIER_COLORS[selectedPlan.tier]}>{selectedPlan.tier.toUpperCase()}</Tag>
 						</Descriptions.Item>
-						<Descriptions.Item label="月费">
-							{selectedPlan.priceMonthly === 0 ? "免费" : `¥${selectedPlan.priceMonthly}`}
+						<Descriptions.Item label="Monthly Price">
+							{selectedPlan.priceMonthly === 0 ? "Free" : `¥${selectedPlan.priceMonthly}`}
 						</Descriptions.Item>
-						<Descriptions.Item label="月 Token 限额">
-							{selectedPlan.tokenLimitMonthly === -1 ? "无限制" : selectedPlan.tokenLimitMonthly.toLocaleString()}
+						<Descriptions.Item label="Monthly Token Limit">
+							{selectedPlan.tokenLimitMonthly === -1 ? "Unlimited" : selectedPlan.tokenLimitMonthly.toLocaleString()}
 						</Descriptions.Item>
-						<Descriptions.Item label="并发限制">{selectedPlan.concurrentLimit}</Descriptions.Item>
-						<Descriptions.Item label="描述">{selectedPlan.description}</Descriptions.Item>
-						<Descriptions.Item label="包含功能" span={2}>
+						<Descriptions.Item label="Concurrency Limit">{selectedPlan.concurrentLimit}</Descriptions.Item>
+						<Descriptions.Item label="Description">{selectedPlan.description}</Descriptions.Item>
+						<Descriptions.Item label="Features" span={2}>
 							<div className="flex flex-wrap gap-1">
 								{selectedPlan.features.map((f) => (
 									<Tag key={f}>{f}</Tag>

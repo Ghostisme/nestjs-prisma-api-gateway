@@ -26,7 +26,7 @@ export function LineLoading() {
 					color: themeMode === "light" ? paletteColors.info.dark : paletteColors.info.default,
 				}}
 			>
-				加载中...
+				Loading...
 			</span>
 		</div>
 	);

@@ -18,8 +18,8 @@ export const MATERIAL_SORT_OPTIONS: Array<{
 	label: string;
 	value: MaterialOrderBy;
 }> = [
-	{ label: "最新", value: "time" },
-	{ label: "下载数", value: "download" },
+	{ label: "Latest", value: "time" },
+	{ label: "Downloads", value: "download" },
 ];
 
 export const MATERIAL_REFERENCE_QUERY_OPTIONS = {

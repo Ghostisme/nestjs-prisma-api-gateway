@@ -67,57 +67,58 @@ export function getFrontendDashboardRoutes(): RouteObject[] {
 				},
 			],
 		},
-		{
-			path: "sys-account-management",
-			children: [
-				{
-					path: "user-management",
-					element: Component("/pages/sys-account-management/user-management"),
-				},
-				{
-					path: "role-management",
-					element: Component("/pages/sys-account-management/role-management"),
-				},
-				{
-					path: "department-management",
-					element: Component("/pages/sys-account-management/department-management"),
-				},
-			],
-		},
-		{
-			path: "partner-enterprise",
-			children: [
-				{
-					index: true,
-					element: <Navigate to="/partner-enterprise/management" replace />,
-				},
-				{
-					path: "management",
-					element: Component("/pages/partnerEnterprise"),
-				},
-			],
-		},
-		{
-			path: "creation-agent",
-			children: [
-				{
-					index: true,
-					element: <Navigate to="/creation-agent/material-center" replace />,
-				},
-				{
-					path: "material-center",
-					element: Component("/pages/creationAgent/materialCenter"),
-				},
-				{
-					path: "tag-management",
-					element: Component("/pages/creationAgent/tagManagement"),
-				},
-				{
-					path: "car-model-management",
-					element: Component("/pages/creationAgent/carModelManagement"),
-				},
-			],
-		},
+		// Demo-only: Java-gateway /admin/* and /xdwx-material/* routes are not wired.
+		// {
+		// 	path: "sys-account-management",
+		// 	children: [
+		// 		{
+		// 			path: "user-management",
+		// 			element: Component("/pages/sys-account-management/user-management"),
+		// 		},
+		// 		{
+		// 			path: "role-management",
+		// 			element: Component("/pages/sys-account-management/role-management"),
+		// 		},
+		// 		{
+		// 			path: "department-management",
+		// 			element: Component("/pages/sys-account-management/department-management"),
+		// 		},
+		// 	],
+		// },
+		// {
+		// 	path: "partner-enterprise",
+		// 	children: [
+		// 		{
+		// 			index: true,
+		// 			element: <Navigate to="/partner-enterprise/management" replace />,
+		// 		},
+		// 		{
+		// 			path: "management",
+		// 			element: Component("/pages/partnerEnterprise"),
+		// 		},
+		// 	],
+		// },
+		// {
+		// 	path: "creation-agent",
+		// 	children: [
+		// 		{
+		// 			index: true,
+		// 			element: <Navigate to="/creation-agent/material-center" replace />,
+		// 		},
+		// 		{
+		// 			path: "material-center",
+		// 			element: Component("/pages/creationAgent/materialCenter"),
+		// 		},
+		// 		{
+		// 			path: "tag-management",
+		// 			element: Component("/pages/creationAgent/tagManagement"),
+		// 		},
+		// 		{
+		// 			path: "car-model-management",
+		// 			element: Component("/pages/creationAgent/carModelManagement"),
+		// 		},
+		// 	],
+		// },
 		{
 			path: "error",
 			children: [

@@ -84,7 +84,7 @@ export default function NoticeButton() {
 			<Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
 				<SheetContent side="right" className="sm:max-w-md p-0 [&>button]:hidden flex flex-col" style={style}>
 					<SheetHeader className="flex flex-row items-center justify-between p-4 h-16 shrink-0">
-						<SheetTitle>消息中心</SheetTitle>
+						<SheetTitle>Notifications</SheetTitle>
 						{/* <Button onClick={handleSendMessage} size="small">
               发送测试消息
             </Button> */}
@@ -195,20 +195,20 @@ function NoticeTab({ onRefresh }: { onRefresh: () => void }) {
 			<div className="flex">
 				<TabsList className="gap-2 flex-1 flex justify-between items-center shrink-0">
 					<TabsTrigger value="all" className="flex items-center gap-1">
-						<span>全部</span>
+						<span>All</span>
 						{allNotifications.length === 0 ? null : <Badge variant="default">{allNotifications.length}</Badge>}
 					</TabsTrigger>
 					<TabsTrigger value="unread" className="flex items-center gap-1">
-						<span>未读</span>
+						<span>Unread</span>
 						{unreadNotifications.length === 0 ? null : <Badge variant="info">{unreadNotifications.length}</Badge>}
 					</TabsTrigger>
 					<TabsTrigger value="read" className="flex items-center gap-1">
-						<span>已读</span>
+						<span>Read</span>
 						{readNotifications.length === 0 ? null : <Badge variant="success">{readNotifications.length}</Badge>}
 					</TabsTrigger>
 				</TabsList>
 				<Button type="text" onClick={handleMarkAllRead}>
-					全部已读
+					Mark all read
 				</Button>
 			</div>
 

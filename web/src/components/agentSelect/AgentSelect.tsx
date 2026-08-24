@@ -64,7 +64,7 @@ export const useAgentSelectOptions = ({
 
 export function AgentSelect({
 	queryEnabled = true,
-	placeholder = "请选择Agent",
+	placeholder = "Select agent",
 	allowClear = true,
 	showSearch = true,
 	valueField = "agentCode",

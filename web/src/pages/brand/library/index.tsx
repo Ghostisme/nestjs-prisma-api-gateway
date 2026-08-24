@@ -88,7 +88,7 @@ export default function LibraryPage() {
 		setOfflineLoading(true);
 		try {
 			await postBrandOfflineApi({ brandId: +selectedItem.brandId });
-			message.success("下线成功");
+			message.success("Taken offline");
 			setOfflineModalOpen(false);
 			actionRef.current?.reload({ resetPage: true });
 		} catch (error) {
@@ -104,7 +104,7 @@ export default function LibraryPage() {
 		try {
 			// await postBrandOfflineApi({ brandId: +selectedItem.brandId });
 			await delBrand(+selectedItem.brandId);
-			message.success("删除成功");
+			message.success("Deleted");
 			setDeleteModalOpen(false);
 			actionRef.current?.reload({ resetPage: true });
 		} catch (error) {
@@ -146,9 +146,9 @@ export default function LibraryPage() {
 				fields: [
 					{
 						name: "keyword",
-						label: "品牌名称",
+						label: "Brand Name",
 						type: "input",
-						placeholder: "请输入品牌名称",
+						placeholder: "Enter brand name",
 					},
 					// {
 					//     name: 'regionName',
@@ -190,7 +190,7 @@ export default function LibraryPage() {
 			},
 			columns: [
 				{
-					title: "品牌Logo",
+					title: "Brand Logo",
 					dataIndex: "brandLogo",
 					width: 100,
 					render: (logo: string) => (
@@ -203,7 +203,7 @@ export default function LibraryPage() {
 						</div>
 					),
 				},
-				{ title: "品牌名称", dataIndex: "brandName", width: 150 },
+				{ title: "Brand Name", dataIndex: "brandName", width: 150 },
 				// {
 				//     title: '覆盖大区数',
 				//     dataIndex: 'regionCount',
@@ -236,13 +236,13 @@ export default function LibraryPage() {
 				//   // )
 				// },
 				{
-					title: "创建时间",
+					title: "Created",
 					dataIndex: "createTime",
 					width: 180,
 					format: "date",
 				},
 				{
-					title: "创建人",
+					title: "Created By",
 					dataIndex: "createUser",
 					width: 180,
 				},
@@ -253,7 +253,7 @@ export default function LibraryPage() {
 				//   format: "date",
 				// },
 				{
-					title: "操作",
+					title: "Actions",
 					key: "action",
 					dataIndex: "action",
 					width: 280,
@@ -262,17 +262,17 @@ export default function LibraryPage() {
 						<Space>
 							<AuthGuard check={LMX_ADMIN_PERMISSIONS.aiDashboard_tokenUsage}>
 								<Button type="link" size="small" onClick={() => handleView(record)}>
-									查看
+									View
 								</Button>
 							</AuthGuard>
 							<AuthGuard check={LMX_ADMIN_PERMISSIONS.aiDashboard_tokenUsage}>
 								<Button type="link" size="small" onClick={() => handleEdit(record)}>
-									编辑
+									Edit
 								</Button>
 							</AuthGuard>
 							<AuthGuard check={LMX_ADMIN_PERMISSIONS.aiDashboard_tokenUsage}>
 								<Button type="link" size="small" danger onClick={() => handleDel(record)}>
-									删除
+									Delete
 								</Button>
 							</AuthGuard>
 							{/* <Button
@@ -291,7 +291,7 @@ export default function LibraryPage() {
 										danger
 										onClick={() => handleOfflineClick(record)}
 									>
-										确认下线
+										Confirm Offline
 									</Button>
 								</AuthGuard>
 							) : null}
@@ -305,7 +305,7 @@ export default function LibraryPage() {
 					...(check(LMX_ADMIN_PERMISSIONS.aiDashboard_tokenUsage)
 						? [
 								{
-									text: "新建品牌",
+									text: "New Brand",
 									icon: <Icon icon="mingcute:add-line" />,
 									type: "primary" as const,
 									onClick: handleCreate,

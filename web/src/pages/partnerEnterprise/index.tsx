@@ -19,8 +19,8 @@ import PartnerUserFormModal from "./components/PartnerUserFormModal";
 import PartnerUserPasswordResetModal from "./components/PartnerUserPasswordResetModal";
 
 const STATUS_LABEL: Record<number, string> = {
-	0: "启用",
-	1: "禁用",
+	0: "Enabled",
+	1: "Disabled",
 };
 
 const toOptionalNumber = (value: unknown): number | undefined => {
@@ -134,10 +134,10 @@ export default function PartnerEnterprisePage(): JSX.Element {
 		async (partnerId: number) => {
 			try {
 				await enablePartnerEnterprise(partnerId);
-				message.success("启用成功");
+				message.success("Enabled successfully");
 				tableActionRef.current?.reload();
 			} catch (error) {
-				message.error(getApiErrorMessage(error, "启用失败"));
+				message.error(getApiErrorMessage(error, "Failed to enable"));
 			}
 		},
 		[message],
@@ -147,10 +147,10 @@ export default function PartnerEnterprisePage(): JSX.Element {
 		async (partnerId: number) => {
 			try {
 				await disablePartnerEnterprise(partnerId);
-				message.success("禁用成功");
+				message.success("Disabled successfully");
 				tableActionRef.current?.reload();
 			} catch (error) {
-				message.error(getApiErrorMessage(error, "禁用失败"));
+				message.error(getApiErrorMessage(error, "Failed to disable"));
 			}
 		},
 		[message],
@@ -191,25 +191,25 @@ export default function PartnerEnterprisePage(): JSX.Element {
 
 	const columns = useMemo<TableConfig<TenantPageVO>["columns"]>(
 		() => [
-			{ title: "合作商ID", dataIndex: "id", width: 260 },
-			{ title: "合作品牌", dataIndex: "brandName", width: 140, ellipsis: true },
+			{ title: "Partner ID", dataIndex: "id", width: 260 },
+			{ title: "Partner Brand", dataIndex: "brandName", width: 140, ellipsis: true },
 			{
-				title: "合作商名称",
+				title: "Partner Name",
 				dataIndex: "name",
 				width: 260,
 				ellipsis: true,
 				tooltip: true,
 			},
-			{ title: "合作商用户数", dataIndex: "userNumber", width: 130 },
+			{ title: "User Count", dataIndex: "userNumber", width: 130 },
 			{
-				title: "企业状态",
+				title: "Status",
 				dataIndex: "status",
 				width: 100,
 				render: (value: number) => STATUS_LABEL[value] ?? "-",
 			},
-			{ title: "加入时间", dataIndex: "joinTime", width: 180 },
+			{ title: "Join Time", dataIndex: "joinTime", width: 180 },
 			{
-				title: "操作1",
+				title: "Account Actions",
 				dataIndex: "accountActions",
 				width: 450,
 				fixed: "right",
@@ -234,7 +234,7 @@ export default function PartnerEnterprisePage(): JSX.Element {
 						return (
 							<div className={actionGroupClassName}>
 								<Button type="link" className={actionButtonClassName} onClick={() => handleCreateAccount(partnerId)}>
-									创建企业账号
+									Create Account
 								</Button>
 							</div>
 						);
@@ -250,7 +250,7 @@ export default function PartnerEnterprisePage(): JSX.Element {
 								className={actionButtonClassName}
 								onClick={() => handleViewAccount(partnerId)}
 							>
-								查看企业账号
+								View Account
 							</Button>,
 						);
 					}
@@ -263,7 +263,7 @@ export default function PartnerEnterprisePage(): JSX.Element {
 								className={actionButtonClassName}
 								onClick={() => handleEditAccount(partnerId)}
 							>
-								编辑企业账号
+								Edit Account
 							</Button>,
 						);
 					}
@@ -276,7 +276,7 @@ export default function PartnerEnterprisePage(): JSX.Element {
 								className={actionButtonClassName}
 								onClick={() => handleOpenResetAccountPassword(partnerId)}
 							>
-								重置企业账号密码
+								Reset Password
 							</Button>,
 						);
 					}
@@ -289,7 +289,7 @@ export default function PartnerEnterprisePage(): JSX.Element {
 				},
 			},
 			{
-				title: "操作2",
+				title: "Partner Actions",
 				dataIndex: "partnerActions",
 				width: 400,
 				fixed: "right",
@@ -305,7 +305,7 @@ export default function PartnerEnterprisePage(): JSX.Element {
 								className={actionButtonClassName}
 								onClick={() => handleView(partnerId)}
 							>
-								查看合作企业
+								View
 							</Button>,
 						);
 					}
@@ -318,7 +318,7 @@ export default function PartnerEnterprisePage(): JSX.Element {
 								className={actionButtonClassName}
 								onClick={() => handleEdit(partnerId)}
 							>
-								编辑合作企业
+								Edit
 							</Button>,
 						);
 					}
@@ -340,14 +340,14 @@ export default function PartnerEnterprisePage(): JSX.Element {
 
 					if (record.status === 0 && check(LMX_ADMIN_PERMISSIONS.partner_disabled)) {
 						actionNodes.push(
-							<Popconfirm key="disable-partner" title="确认禁用该合作企业？" onConfirm={() => handleDisable(partnerId)}>
+							<Popconfirm key="disable-partner" title="Disable this partner enterprise?" onConfirm={() => handleDisable(partnerId)}>
 								<Button
 									type="link"
 									danger
 									className={actionButtonClassName}
 									onClick={(event) => event.stopPropagation()}
 								>
-									禁用合作企业
+									Disable
 								</Button>
 							</Popconfirm>,
 						);
@@ -355,9 +355,9 @@ export default function PartnerEnterprisePage(): JSX.Element {
 
 					if (record.status !== 0 && check(LMX_ADMIN_PERMISSIONS.partner_enabled)) {
 						actionNodes.push(
-							<Popconfirm key="enable-partner" title="确认启用该合作企业？" onConfirm={() => handleEnable(partnerId)}>
+							<Popconfirm key="enable-partner" title="Enable this partner enterprise?" onConfirm={() => handleEnable(partnerId)}>
 								<Button type="link" className={actionButtonClassName} onClick={(event) => event.stopPropagation()}>
-									启用合作企业
+									Enable
 								</Button>
 							</Popconfirm>,
 						);
@@ -392,7 +392,7 @@ export default function PartnerEnterprisePage(): JSX.Element {
 				align: "left",
 				customActions: [
 					{
-						text: "新建合作企业",
+						text: "Add Partner Enterprise",
 						type: "primary",
 						onClick: () => {
 							setEditPartnerId(null);
@@ -418,24 +418,24 @@ export default function PartnerEnterprisePage(): JSX.Element {
 				fields: [
 					{
 						name: "brandId",
-						label: "合作品牌",
+						label: "Partner Brand",
 						type: "brandSelect",
-						placeholder: "请选择",
+						placeholder: "Select",
 					},
 					{
 						name: "name",
-						label: "合作商名称",
+						label: "Partner Name",
 						type: "input",
-						placeholder: "请输入",
+						placeholder: "Enter…",
 					},
 					{
 						name: "status",
-						label: "企业状态",
+						label: "Status",
 						type: "select",
-						placeholder: "请选择",
+						placeholder: "Select",
 						options: [
-							{ label: "启用", value: 0 },
-							{ label: "禁用", value: 1 },
+							{ label: "Enabled", value: 0 },
+							{ label: "Disabled", value: 1 },
 						],
 					},
 				],
@@ -444,7 +444,7 @@ export default function PartnerEnterprisePage(): JSX.Element {
 			pagination: {
 				showQuickJumper: false,
 				showSizeChanger: false,
-				showTotal: (total) => `共 ${total} 条数据`,
+				showTotal: (total) => `${total} records`,
 			},
 		}),
 		[dataSource, columns],

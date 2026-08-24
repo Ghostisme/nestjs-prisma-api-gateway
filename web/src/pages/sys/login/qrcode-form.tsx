@@ -9,8 +9,8 @@ function QrCodeFrom() {
 	return (
 		<>
 			<div className="flex flex-col items-center gap-2 text-center">
-				<h1 className="text-2xl font-bold">二维码登录</h1>
-				<p className="text-balance text-sm text-muted-foreground">扫码后点击'确认'，即可完成登录</p>
+				<h1 className="text-2xl font-bold">QR Login</h1>
+				<p className="text-balance text-sm text-muted-foreground">Scan the code, then tap "Confirm" to sign in</p>
 			</div>
 
 			<div className="flex w-full flex-col items-center justify-center p-4">

@@ -38,7 +38,7 @@ export const useBrandSelectOptions = (queryEnabled = true) => {
 
 export function BrandSelect({
 	queryEnabled = true,
-	placeholder = "请选择",
+	placeholder = "Select",
 	allowClear = true,
 	...props
 }: BrandSelectProps): JSX.Element {

@@ -11,9 +11,9 @@ import KnowledgeBaseFormPage from "./components/KnowledgeBaseFormPage";
 const PAGE_SIZE = 8;
 
 const STATUS_OPTIONS = [
-	{ label: "全部", value: "" },
-	{ label: "启用", value: "active" },
-	{ label: "禁用", value: "disabled" },
+	{ label: "All", value: "" },
+	{ label: "Enabled", value: "active" },
+	{ label: "Disabled", value: "disabled" },
 ];
 
 export default function KnowledgeBasePage(): JSX.Element {
@@ -67,10 +67,10 @@ export default function KnowledgeBasePage(): JSX.Element {
 	const handleToggleStatus = useCallback(async (id: string, status: "active" | "disabled") => {
 		try {
 			await aiKnowledgeBaseService.toggleKnowledgeBaseStatus(id, status);
-			message.success(status === "active" ? "启用成功" : "禁用成功");
+			message.success(status === "active" ? "Enabled successfully" : "Disabled successfully");
 			setRefreshKey((k) => k + 1);
 		} catch (error) {
-			message.error(getApiErrorMessage(error, "操作失败"));
+			message.error(getApiErrorMessage(error, "Operation failed"));
 		}
 	}, []);
 
@@ -105,7 +105,7 @@ export default function KnowledgeBasePage(): JSX.Element {
 			<div className="grid grid-cols-3 gap-6">
 				<div className="rounded-xl bg-[var(--card)] p-6 shadow-sm border border-[var(--border)] flex items-center gap-4">
 					<div className="flex-1">
-						<div className="text-sm text-[var(--muted-foreground)] mb-1">知识库总数</div>
+						<div className="text-sm text-[var(--muted-foreground)] mb-1">Knowledge bases</div>
 						<div className="text-3xl font-bold text-[var(--foreground)]">{overview?.totalBases ?? "-"}</div>
 					</div>
 					<div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
@@ -114,7 +114,7 @@ export default function KnowledgeBasePage(): JSX.Element {
 				</div>
 				<div className="rounded-xl bg-[var(--card)] p-6 shadow-sm border border-[var(--border)] flex items-center gap-4">
 					<div className="flex-1">
-						<div className="text-sm text-[var(--muted-foreground)] mb-1">知识文档总数</div>
+						<div className="text-sm text-[var(--muted-foreground)] mb-1">Documents</div>
 						<div className="text-3xl font-bold text-[var(--foreground)]">{overview?.totalDocuments ?? "-"}</div>
 					</div>
 					<div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/10">
@@ -123,7 +123,7 @@ export default function KnowledgeBasePage(): JSX.Element {
 				</div>
 				<div className="rounded-xl bg-[var(--card)] p-6 shadow-sm border border-[var(--border)] flex items-center gap-4">
 					<div className="flex-1">
-						<div className="text-sm text-[var(--muted-foreground)] mb-1">引用总次数</div>
+						<div className="text-sm text-[var(--muted-foreground)] mb-1">Total references</div>
 						<div className="text-3xl font-bold text-[var(--foreground)]">{overview?.totalReferences ?? "-"}</div>
 					</div>
 					<div className="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-500/10">
@@ -136,16 +136,16 @@ export default function KnowledgeBasePage(): JSX.Element {
 			<div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-4">
 				<div className="flex items-center gap-3 flex-wrap">
 					<Input
-						placeholder="搜索知识库..."
+						placeholder="Search knowledge bases..."
 						value={searchName}
 						onChange={(e) => setSearchName(e.target.value)}
 						className="w-64"
 						allowClear
 					/>
 					<div className="flex items-center gap-2">
-						<span className="text-sm text-[var(--muted-foreground)]">搜索标签</span>
+						<span className="text-sm text-[var(--muted-foreground)]">Tag</span>
 						<Input
-							placeholder="请输入"
+							placeholder="Enter tag"
 							value={searchTag}
 							onChange={(e) => setSearchTag(e.target.value)}
 							className="w-32"
@@ -153,14 +153,14 @@ export default function KnowledgeBasePage(): JSX.Element {
 						/>
 					</div>
 					<div className="flex items-center gap-2">
-						<span className="text-sm text-[var(--muted-foreground)]">状态</span>
+						<span className="text-sm text-[var(--muted-foreground)]">Status</span>
 						<Select value={statusFilter} onChange={setStatusFilter} options={STATUS_OPTIONS} className="w-28" />
 					</div>
 					<div className="flex gap-2 ml-auto">
 						<Button type="primary" onClick={handleSearch}>
-							查询
+							Search
 						</Button>
-						<Button onClick={handleReset}>重置</Button>
+						<Button onClick={handleReset}>Reset</Button>
 					</div>
 				</div>
 			</div>
@@ -191,7 +191,7 @@ export default function KnowledgeBasePage(): JSX.Element {
 							<div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 mb-3">
 								<Icon icon="ph:plus" size={28} className="text-primary" />
 							</div>
-							<span className="text-sm font-medium text-primary">创建新知识库</span>
+							<span className="text-sm font-medium text-primary">Create knowledge base</span>
 						</div>
 					</div>
 
