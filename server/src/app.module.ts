@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { DemoAuthModule } from './modules/demo-auth/demo-auth.module';
 import { ProxyModule } from './modules/proxy/proxy.module';
 import { DictModule } from './modules/dict/dict.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
@@ -38,6 +39,8 @@ import { HealthModule } from './modules/health/health.module';
     HealthModule,
     PrismaModule,
     AuthModule,
+    // 演示登录：仅 AUTH_MOCK=true 时注册控制器，替代被转发到下游 Java 的登录端点。
+    DemoAuthModule.register(),
     ProxyModule,
     DictModule,
     DashboardModule,

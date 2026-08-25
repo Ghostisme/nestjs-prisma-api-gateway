@@ -13,8 +13,17 @@ const GATEWAY_HEADERS = {
 export class JavaProxyMiddleware implements NestMiddleware {
   private readonly proxy: ReturnType<typeof createProxyMiddleware>;
   private readonly logger = new Logger(JavaProxyMiddleware.name);
+  /**
+   * 演示模式开关。为 true 时，登录相关的 /auth/* 请求不再转发到下游 Java 网关，
+   * 而是放行给本服务内的 DemoAuthController 处理（Vercel 演示站没有下游 Java，
+   * 转发只会得到 ECONNREFUSED）。与 OpaqueTokenGuard 的 AUTH_MOCK 分支配套。
+   */
+  private readonly isMockAuth: boolean;
 
   constructor(private readonly configService: ConfigService) {
+    this.isMockAuth =
+      this.configService.get<string>('AUTH_MOCK', 'false') === 'true';
+
     const target = this.configService.get<string>(
       'JAVA_GATEWAY_URL',
       'http://localhost:8080/api',
@@ -70,6 +79,12 @@ export class JavaProxyMiddleware implements NestMiddleware {
     const isAuthRoute =
       req.originalUrl.startsWith('/api/auth/') ||
       req.originalUrl.startsWith('/auth/');
+
+    // 演示模式：登录请求不转发，交给 DemoAuthController（下游 Java 在演示环境不存在）。
+    if (this.isMockAuth && isAuthRoute) {
+      next();
+      return;
+    }
 
     if (isAuthRoute) {
       this.proxy(req, res, next);

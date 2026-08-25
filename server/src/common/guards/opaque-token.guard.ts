@@ -9,6 +9,7 @@ import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import type { UserContext } from '../interfaces/user-context.interface';
+import { DEMO_PERMISSIONS } from '../../modules/demo-auth/demo-user.fixture';
 
 const MOCK_USER: UserContext = {
   tenantId: 1,
@@ -18,48 +19,8 @@ const MOCK_USER: UserContext = {
   deptId: 1,
   deptName: 'Engineering',
   roles: ['ROLE_1'],
-  permissions: [
-    'lmxAdmin:aiDashboard:userDashboard',
-    'lmxAdmin:aiDashboard:tokenUsage',
-    'lmxAdmin:aiDashboard:userFeedback',
-    'lmxAdmin:aiManagement:tokenUserManagement',
-    'lmxAdmin:aiManagement:tokenUserManagement:manageQuota',
-    'lmxAdmin:aiManagement:tokenUserManagement:records',
-    'lmxAdmin:aiManagement:tokenUserManagement:consumption',
-    'lmxAdmin:aiManagement:tokenSystemManagement',
-    'lmxAdmin:aiManagement:tokenSystemManagement:configDept',
-    'lmxAdmin:aiManagement:tokenSystemManagement:configMember',
-    'lmxAdmin:aiManagement:tokenSystemManagement:viewDetail',
-    'lmxAdmin:aiManagement:userConversationStats',
-    'lmxAdmin:aiManagement:userConversationStats:viewDetail',
-    'lmxAdmin:aiManagement:bannedWords',
-    'lmxAdmin:aiKnowledge:knowledgeBase',
-    'lmxAdmin:partner:read',
-    'lmxAdmin:partner:create',
-    'lmxAdmin:partner:update',
-    'lmxAdmin:partner:delete',
-    'lmxAdmin:partner:disabled',
-    'lmxAdmin:partner:enabled',
-    'lmxAdmin:partner:createAccount',
-    'admin:account:read',
-    'admin:account:create',
-    'admin:account:view',
-    'admin:account:update',
-    'admin:account:disabled',
-    'admin:account:enabled',
-    'admin:account:resetPassword',
-    'admin:role:read',
-    'admin:role:create',
-    'admin:role:update',
-    'admin:role:disabled',
-    'admin:role:enabled',
-    'admin:dept:read',
-    'admin:dept:export',
-    'admin:dept:viewDeptUsers',
-    'admin:dept:exportDeptUsers',
-    'lmxAdmin:global:upload',
-    'lmxAdmin:global:download',
-  ],
+  // 与演示登录返回的 user_info.permissions 共用同一份清单，避免前后端权限漂移。
+  permissions: DEMO_PERMISSIONS,
 };
 
 const TENANT_ID_HEADER = 'tenant-id';
