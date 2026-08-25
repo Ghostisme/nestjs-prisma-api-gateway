@@ -23,19 +23,22 @@ Vercel serverless back-end.
 
 ---
 
-## 1. Database — Neon
+## 1. Database — Aiven / Neon / any managed Postgres
 
-1. Create a project at [neon.tech](https://neon.tech); copy the connection
-   string (looks like `postgresql://user:pass@ep-xxx.neon.tech/db?sslmode=require`).
-2. Apply the schema. Locally, with `DATABASE_URL` pointed at Neon:
+1. Create a Postgres service (Aiven, Neon, Supabase, …) and copy its
+   connection string, e.g.
+   `postgresql://avnadmin:pass@pg-xxx.aivencloud.com:17304/defaultdb?sslmode=require`.
+2. Create the schema + demo data. This project uses ordered SQL scripts
+   (`database/scripts/V001…V013`), **not** Prisma migrations. A Node runner
+   applies them in order (no local `psql` needed; SSL auto-on for managed hosts):
    ```bash
    cd server
    pnpm install
-   pnpm prisma migrate deploy     # or: apply database/scripts/V001..V010 in order
-   pnpm db:seed                   # seed dictionary / reference data
+   DATABASE_URL="<your connection string>" node scripts/apply-migrations.mjs
    ```
-   `prisma.service.ts` auto-enables TLS for `*.neon.tech`, so no extra flag is
-   needed.
+   `prisma.service.ts` and the runner both auto-enable TLS for
+   `*.aivencloud.com` / `*.neon.tech` / `*.supabase.co`, so no extra flag is
+   needed. To resume after a partial run: `node scripts/apply-migrations.mjs V007`.
 
 ## 2. Redis — Upstash
 
