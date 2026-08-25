@@ -1,0 +1,14 @@
+# Never upload local configuration or Vercel's local credentials.
+.env
+.env.*
+.env.local
+.vercel
+
+# Dependencies and local build output are rebuilt by Vercel.
+node_modules
+dist
+coverage
+
+# Local-only files.
+*.log
+.DS_Store
