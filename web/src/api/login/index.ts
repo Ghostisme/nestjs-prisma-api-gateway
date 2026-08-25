@@ -1,7 +1,16 @@
 import apiClient, { ApiClient } from "../apiClient";
+import { GLOBAL_CONFIG } from "@/global-config";
 
+/**
+ * 微信/系统账号登录客户端（/system 前缀）。
+ *
+ * baseURL 拼接规则：
+ * - 线上：GLOBAL_CONFIG.apiBaseUrl 已是后端绝对地址（<backend>/api），拼上 /system
+ *   得到 <backend>/api/system，直连后端；避免用相对 "/api/system" 打到纯静态前端域名。
+ * - 开发：apiBaseUrl 回退为相对 "/api"，拼成 "/api/system"，交给 Vite dev proxy 代理。
+ */
 const wxApiClient = new ApiClient({
-	baseURL: "/api/system",
+	baseURL: `${GLOBAL_CONFIG.apiBaseUrl}/system`,
 });
 
 const Path = "/auth";
