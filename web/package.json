@@ -118,7 +118,7 @@
 		"vite-tsconfig-paths": "^5.1.2"
 	},
 	"engines": {
-		"node": "20.*"
+		"node": "24.x"
 	},
 	"packageManager": "pnpm@10.8.0",
 	"msw": {
