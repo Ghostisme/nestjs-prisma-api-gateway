@@ -79,9 +79,14 @@ export class JavaProxyMiddleware implements NestMiddleware {
     const isAuthRoute =
       req.originalUrl.startsWith('/api/auth/') ||
       req.originalUrl.startsWith('/auth/');
+    const isAdminRoute =
+      req.originalUrl.startsWith('/api/admin/') ||
+      req.originalUrl.startsWith('/admin/');
 
-    // 演示模式：登录请求不转发，交给 DemoAuthController（下游 Java 在演示环境不存在）。
-    if (this.isMockAuth && isAuthRoute) {
+    // 演示模式：登录(/auth/*)与管理类(/admin/*)请求都不转发到下游 Java（演示环境不存在），
+    // 交给本服务内的 DemoAuthController / DemoAdminController 用占位数据兜底，
+    // 保证前端所有页面可打开、不因转发失败而白屏或报错。
+    if (this.isMockAuth && (isAuthRoute || isAdminRoute)) {
       next();
       return;
     }
