@@ -5,6 +5,21 @@
   top: 0;
 }
 
+/*
+ * Login page root background.
+ * The design is light-first (soft blue gradient). Under the dark theme the
+ * gradient would clash with the light-on-dark text tokens (white title on a
+ * near-white panel = unreadable), so we swap to the theme's dark surface via
+ * the global [data-theme-mode="dark"] attribute set on <html>.
+ */
+.loginRoot {
+	background: linear-gradient(217.71deg, #fafbff 4.33%, #f3f7ff 26.44%, #f8faff 56.25%, #f9fcff 100%);
+}
+
+:global([data-theme-mode="dark"]) .loginRoot {
+	background: var(--background);
+}
+
 .authPanel {
 	--login-card-height: 438px;
 	display: flex;
@@ -20,6 +35,13 @@
 	overflow: hidden;
 	padding: 24px 28px 28px;
 	backdrop-filter: blur(10px);
+}
+
+/* Dark theme: use the themed card surface/border instead of the hard white. */
+:global([data-theme-mode="dark"]) .authCard {
+	background: var(--card);
+	border-color: var(--border);
+	box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
 }
 
 .authTabs {

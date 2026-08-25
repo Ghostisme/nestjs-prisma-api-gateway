@@ -1,13 +1,12 @@
 // import PlaceholderImg from "@/assets/images/background/placeholder.svg";
 import PlaceholderImg from "@/assets/images/login/bg-img.png";
 import TopRightBg from "@/assets/images/login/top-right-bg.png";
-// import Logo from "@/components/logo";
 import { GLOBAL_CONFIG } from "@/global-config";
-// import SettingButton from "@/layouts/components/setting-button";
+import { cn } from "@/utils";
 import { useUserToken } from "@/store/userStore";
 import { Navigate } from "react-router";
 import LoginForm from "./login-form";
-// import MobileForm from "./mobile-form";
+import style from "./login-form.module.css";
 import { LoginProvider } from "./providers/login-provider";
 // import QrCodeFrom from "./qrcode-form";
 // import RegisterForm from "./register-form";
@@ -23,10 +22,7 @@ function LoginPage() {
 
 	return (
 		<div
-			className="relative flex min-h-svh bg-background"
-			style={{
-				background: "linear-gradient(217.71deg, #FAFBFF 4.33%, #F3F7FF 26.44%, #F8FAFF 56.25%, #F9FCFF 100%)",
-			}}
+			className={cn("relative flex min-h-svh bg-background", style.loginRoot)}
 		>
 			<div className="relative hidden bg-background-paper lg:block flex-1">
 				<img
