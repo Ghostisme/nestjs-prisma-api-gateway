@@ -2,6 +2,13 @@ import { All, Controller, Req } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
 import type { Request } from 'express';
 import { Public } from '../../common/decorators/public.decorator';
+import {
+  DEMO_AGENTS,
+  DEMO_DEPARTMENTS,
+  DEMO_PARTNERS,
+  DEMO_ROLES,
+  DEMO_USERS,
+} from './demo-admin.fixture';
 
 /**
  * 演示占位控制器（仅在 AUTH_MOCK=true 时注册）。
@@ -38,12 +45,30 @@ export class DemoAdminController {
     const path = (req.path || req.url || '').split('?')[0].toLowerCase();
     const method = (req.method || 'GET').toUpperCase();
 
-    // availableAgents：登录后立即被 AgentSelect 调用，必须是数组（前端 .map）。
+    // availableAgents：登录后立即被 AgentSelect 调用；返回几个演示智能体。
     if (path.endsWith('/user/availableagents')) {
-      return [];
+      return DEMO_AGENTS;
     }
 
-    // 分页列表：路径以 /page 结尾，或部门用户列表 /dept/users。
+    // ── 有内容的列表页：填充演示假数据，让后台“看起来在运转” ──────────────
+    // 用户管理列表
+    if (path.endsWith('/account/page')) {
+      return this.page(req, DEMO_USERS);
+    }
+    // 角色管理列表
+    if (path.endsWith('/role/common/page')) {
+      return this.page(req, DEMO_ROLES);
+    }
+    // 部门管理列表
+    if (path.endsWith('/dept/page')) {
+      return this.page(req, DEMO_DEPARTMENTS);
+    }
+    // 合作企业列表
+    if (path.endsWith('/tenant/page')) {
+      return this.page(req, DEMO_PARTNERS);
+    }
+
+    // 其余分页列表（部门成员等）：返回空分页，不报错即可。
     if (path.endsWith('/page') || path.endsWith('/dept/users')) {
       return this.emptyPage(req);
     }
@@ -74,6 +99,30 @@ export class DemoAdminController {
     const size = toNum(body.size ?? query.size, 10);
     const current = toNum(body.current ?? query.current, 1);
     return { records: [], total: 0, size, current, pages: 0 };
+  }
+
+  /**
+   * 把一组演示记录装进分页结构。演示数据量小（个位数），直接整页返回而不做真实
+   * 切片：total 取记录数，size 沿用请求值（不足则至少为记录数或 10），
+   * 保证前端分页组件显示正常。
+   */
+  private page(req: Request, records: unknown[]): Record<string, unknown> {
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    const query = req.query ?? {};
+    const toNum = (v: unknown, fallback: number): number => {
+      const n = Number(v);
+      return Number.isFinite(n) && n > 0 ? n : fallback;
+    };
+    const total = records.length;
+    const size = toNum(body.size ?? query.size, Math.max(total, 10));
+    const current = toNum(body.current ?? query.current, 1);
+    return {
+      records,
+      total,
+      size,
+      current,
+      pages: Math.max(1, Math.ceil(total / size)),
+    };
   }
 
   /**
