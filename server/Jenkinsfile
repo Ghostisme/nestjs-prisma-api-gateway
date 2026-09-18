@@ -1,122 +1,280 @@
+// Lumax Service（API Gateway）部署流水线
+//
+// 本文件替换了早期的 PM2 版本。原方案走 nvm + rsync + pm2 reload，与现在
+// 「后端统一跑 Docker」的部署约定冲突，且宿主机上要额外维护一套 Node/PM2。
+//
+// 形态：Jenkins 从 GitHub 拉代码 → 本机构建镜像 → 跑数据库迁移 → 换掉旧容器。
+// 镜像只存在本机 Docker，不推远端 registry。
+//
+// 产出一个容器：
+//   lumax-api —— NestJS 服务，监听 127.0.0.1:19008
+//
+// 只绑回环地址，公网入口由宿主机 nginx 在 gateway.darkrich.com 上反代。
+// main.ts 里 setGlobalPrefix("api")，Swagger 挂 /api-docs（均在全局前缀之外
+// 单独挂载），nginx 转发时两个路径都要保留原样、不要 strip。
+//
+// 前置条件：
+//   1. Jenkins 执行用户能访问 Docker daemon。
+//   2. 已建好 Secret file 凭据 lumax-env（务必包含 AUTH_MOCK=false）。
+//   3. docker network create appnet 已执行。
+//   4. PostgreSQL 的 lumax 库与账号已创建（建表由本流水线的迁移阶段完成）。
+//
+// 分支策略（多分支流水线）：
+//   main     —— 构建 + 迁移 + 部署 + 健康检查，即线上环境。
+//   其它分支 —— 只构建，验证「这个分支能否成功打出镜像」。
+//
+// 这份流水线对分支守卫的要求比另两个项目更硬：数据库迁移是【不可回滚】的写操作，
+// 特性分支上一份没写完的 V0xx.sql 一旦跑到生产库，服务回滚也救不回来。
+// 因此迁移与之后的所有 stage 一律受 isProduction() 保护。
+
+// ---------------------------------------------------------------------------
+// 多分支支持
+//
+// 多分支流水线会为每个分支各建一条子流水线，并注入 BRANCH_NAME。
+// 经典 Pipeline 任务没有这个变量，此处回退成 main，让同一份文件在两种
+// 任务类型下都能正常工作（迁移任务类型时不需要改 Jenkinsfile）。
+// ---------------------------------------------------------------------------
+
+/** 当前分支名。经典 Pipeline 任务下回退为 main。 */
+String branchName() {
+  return env.BRANCH_NAME ?: 'main'
+}
+
+/** 是否为生产分支。只有生产分支允许改动线上容器与生产数据库。 */
+boolean isProduction() {
+  return branchName() == 'main'
+}
+
+/**
+ * 镜像标签。
+ *
+ * main 用纯构建号，维持「数字 tag = 可回滚的生产版本」这一约定 ——
+ * 清理阶段用 ^[0-9]+$ 过滤要删的旧版本，特性分支的 tag 必须落在这个集合之外，
+ * 否则会被当成旧的生产版本误删。
+ *
+ * 其它分支加分支名前缀：多分支流水线的 BUILD_NUMBER 是【每分支独立计数】的，
+ * 不加前缀时 feature-a 的 #1 和 feature-b 的 #1 会抢同一个 tag。
+ */
+String imageTag() {
+  if (isProduction()) {
+    return env.BUILD_NUMBER
+  }
+  // Docker tag 合法字符集是 [A-Za-z0-9_.-]，feature/xxx 这类分支名含 / 必须转义。
+  return branchName().replaceAll('[^A-Za-z0-9._-]', '-') + '-' + env.BUILD_NUMBER
+}
+
 pipeline {
-    agent any
+  agent any
 
-    environment {
-        APP_NAME   = 'lumax-service'
-        DEPLOY_DIR = '/opt/lumax-service'
-        NVM_DIR    = '/root/.nvm'
+  options {
+    timestamps()
+    timeout(time: 30, unit: 'MINUTES')
+    buildDiscarder(logRotator(numToKeepStr: '20'))
+    disableConcurrentBuilds()
+  }
+
+  parameters {
+    // 迁移是有序 SQL（V001…V013），脚本本身对已应用的版本是幂等跳过的。
+    // 但真出问题时需要一个不跑迁移、只换服务的逃生通道，故留此开关。
+    booleanParam(
+      name: 'RUN_MIGRATIONS',
+      defaultValue: true,
+      description: '部署前执行数据库迁移（database/scripts/V*.sql）。仅在排障时关闭。'
+    )
+  }
+
+  environment {
+    APP           = 'lumax'
+    NETWORK       = 'appnet'
+
+    IMAGE         = 'lumax-api'
+    CONTAINER     = 'lumax-api'
+
+    HOST_PORT     = '19008'
+    APP_PORT      = '9008'
+
+    PUBLIC_DOMAIN = 'gateway.darkrich.com'
+
+    TAG           = "${imageTag()}"
+  }
+
+  stages {
+
+    stage('检出代码') {
+      steps {
+        checkout scm
+        sh 'git log -1 --pretty="提交: %h %an %s"'
+      }
     }
 
-    options {
-        timestamps()
-        timeout(time: 15, unit: 'MINUTES')
-        disableConcurrentBuilds()
+    stage('构建镜像') {
+      steps {
+        // 上下文取 server/，与 Dockerfile 内的 COPY 路径约定一致。
+        sh '''
+          set -eu
+          docker build \
+            -f server/Dockerfile \
+            -t "${IMAGE}:${TAG}" \
+            -t "${IMAGE}:latest" \
+            server
+        '''
+      }
     }
 
-    stages {
-        stage('拉取代码') {
-            steps {
-                checkout scm
-            }
+    stage('数据库迁移') {
+      // 两个条件缺一不可：
+      //   isProduction()        —— 迁移直接写生产库，特性分支绝不能触发。
+      //   params.RUN_MIGRATIONS —— 排障时的逃生开关。
+      // 注意：多分支流水线里 parameters 要等第一次构建把定义登记进 Jenkins 之后
+      // 才生效，首次扫描触发的那次构建会用 defaultValue（true），这符合预期。
+      when { expression { isProduction() && params.RUN_MIGRATIONS } }
+      steps {
+        withCredentials([file(credentialsId: 'lumax-env', variable: 'ENV_FILE')]) {
+          // 用刚构建出的同一个镜像起一次性容器执行迁移。这样「跑迁移的代码」
+          // 与「跑服务的代码」必然是同一个版本，不会出现迁移脚本比服务旧/新的错配。
+          //
+          // --rm 保证容器退出即删；迁移失败时 docker run 返回非零，
+          // set -e 会让流水线在此中断，绝不会带着半截 schema 去换服务容器。
+          sh '''
+            set -eu
+            docker run --rm \
+              --network "${NETWORK}" \
+              --env-file "${ENV_FILE}" \
+              "${IMAGE}:${TAG}" \
+              node scripts/apply-migrations.mjs
+          '''
         }
-
-        stage('安装依赖') {
-            steps {
-                sh """
-                    export NVM_DIR="${NVM_DIR}"
-                    . "\$NVM_DIR/nvm.sh"
-
-                    echo ">>> Node: \$(node -v)  PNPM: \$(pnpm -v)"
-                    pnpm install --frozen-lockfile
-                """
-            }
-        }
-
-        stage('构建') {
-            steps {
-                sh """
-                    export NVM_DIR="${NVM_DIR}"
-                    . "\$NVM_DIR/nvm.sh"
-
-                    echo ">>> Prisma generate"
-                    npx prisma generate
-
-                    echo ">>> Build"
-                    pnpm build
-                """
-            }
-        }
-
-        stage('部署') {
-            steps {
-                sh """
-                    export NVM_DIR="${NVM_DIR}"
-                    . "\$NVM_DIR/nvm.sh"
-
-                    echo "=========================================="
-                    echo "  部署 ${APP_NAME}"
-                    echo "=========================================="
-
-                    echo ">>> 当前工作目录: \$(pwd)"
-                    ls -la dist/ || echo "dist 目录不存在！"
-
-                    echo ">>> [1/4] 同步文件到部署目录"
-                    mkdir -p ${DEPLOY_DIR}/logs
-                    rsync -a --delete \
-                        \${WORKSPACE}/dist/ ${DEPLOY_DIR}/dist/
-                    rsync -a --delete \
-                        \${WORKSPACE}/node_modules/ ${DEPLOY_DIR}/node_modules/
-                    cp -f \${WORKSPACE}/package.json ${DEPLOY_DIR}/
-                    cp -rf \${WORKSPACE}/prisma/ ${DEPLOY_DIR}/prisma/
-                    cp -f \${WORKSPACE}/.env.production ${DEPLOY_DIR}/ 2>/dev/null || true
-
-                    echo ">>> [2/4] 启动/重启 PM2"
-                    if pm2 describe ${APP_NAME} > /dev/null 2>&1; then
-                        echo ">>> 进程已存在，尝试 reload"
-                        if ! pm2 reload ${APP_NAME} --update-env; then
-                            echo ">>> reload 失败，删除残留进程后重新启动"
-                            pm2 delete ${APP_NAME} || true
-                            NODE_ENV=production pm2 start ${DEPLOY_DIR}/dist/src/main.js \\
-                                --name ${APP_NAME} \\
-                                --cwd ${DEPLOY_DIR} \\
-                                --max-memory-restart 1G \\
-                                --kill-timeout 5000 \\
-                                -e ${DEPLOY_DIR}/logs/error.log \\
-                                -o ${DEPLOY_DIR}/logs/output.log
-                        fi
-                    else
-                        echo ">>> 进程不存在，首次启动"
-                        NODE_ENV=production pm2 start ${DEPLOY_DIR}/dist/src/main.js \\
-                            --name ${APP_NAME} \\
-                            --cwd ${DEPLOY_DIR} \\
-                            --max-memory-restart 1G \\
-                            --kill-timeout 5000 \\
-                            -e ${DEPLOY_DIR}/logs/error.log \\
-                            -o ${DEPLOY_DIR}/logs/output.log
-                    fi
-
-                    echo ">>> [3/4] 保存 PM2 进程列表（开机自启）"
-                    pm2 save
-
-                    echo ">>> [4/4] 查看状态"
-                    sleep 3
-                    pm2 show ${APP_NAME}
-
-                    echo "=========================================="
-                    echo "  部署完成: ${APP_NAME}"
-                    echo "  服务地址: http://localhost:9008"
-                    echo "=========================================="
-                """
-            }
-        }
+      }
     }
 
-    post {
-        success {
-            echo "部署成功 => ${APP_NAME}"
+    stage('部署服务') {
+      // 容器名与宿主机端口都是硬编码的单例，非生产分支一旦执行就会顶掉线上服务。
+      when { expression { isProduction() } }
+      steps {
+        withCredentials([file(credentialsId: 'lumax-env', variable: 'ENV_FILE')]) {
+          sh '''
+            set -eu
+            docker rm -f "${CONTAINER}" 2>/dev/null || true
+
+            docker run -d \
+              --name "${CONTAINER}" \
+              --network "${NETWORK}" \
+              --restart unless-stopped \
+              --env-file "${ENV_FILE}" \
+              -e PORT="${APP_PORT}" \
+              -p 127.0.0.1:${HOST_PORT}:${APP_PORT} \
+              --log-opt max-size=10m --log-opt max-file=3 \
+              "${IMAGE}:${TAG}"
+          '''
         }
-        failure {
-            echo "部署失败，请检查日志"
-        }
+      }
     }
+
+    stage('健康检查') {
+      // 探的是线上端口，非生产分支根本没部署，跑这一步只会探到上一次 main 的结果，
+      // 给出虚假的绿灯。
+      when { expression { isProduction() } }
+      steps {
+        // 这个服务启动时要建 Prisma 连接池并连 Redis，比纯静态服务慢，
+        // 给到 90 秒上限。
+        sh '''
+          set -eu
+
+          ok=0
+          for i in $(seq 1 45); do
+            # 优先探 /api/health；该路由不存在时回退探 /api-docs，
+            # 后者只要 Nest 起来且 SWAGGER_ENABLED=true 就一定有响应。
+            if curl -fsS --max-time 3 "http://127.0.0.1:${HOST_PORT}/api/health" >/dev/null 2>&1 \
+               || curl -fsS --max-time 3 "http://127.0.0.1:${HOST_PORT}/api-docs" >/dev/null 2>&1; then
+              ok=1
+              break
+            fi
+            sleep 2
+          done
+
+          if [ "$ok" != "1" ]; then
+            echo "❌ 服务在 90 秒内未就绪"
+            echo "--- ${CONTAINER} 最近日志 ---"
+            docker logs --tail 120 "${CONTAINER}" || true
+            exit 1
+          fi
+
+          echo "✅ 服务就绪: http://127.0.0.1:${HOST_PORT}"
+        '''
+      }
+    }
+
+    stage('校验生产配置') {
+      // 校验的是运行中的线上容器，非生产分支没有这个容器，docker exec 必然失败。
+      when { expression { isProduction() } }
+      steps {
+        // AUTH_MOCK=true 会跳过 Redis opaque-token 校验并注入 mock 用户，
+        // 等同于鉴权全开。这是最容易被 .env 复制粘贴带到生产的一项，
+        // 因此在部署后显式校验容器内的实际取值，发现即让构建变黄。
+        sh '''
+          set -eu
+          mock=$(docker exec "${CONTAINER}" printenv AUTH_MOCK 2>/dev/null || echo "unset")
+          if [ "$mock" = "true" ]; then
+            echo "⚠️  严重：容器内 AUTH_MOCK=true，鉴权处于绕过状态！"
+            echo "    请立即修正凭据 lumax-env 中的该项为 false 并重新部署。"
+            exit 1
+          fi
+          echo "✅ AUTH_MOCK=${mock}（非 true，鉴权正常）"
+        '''
+      }
+    }
+
+    stage('清理旧镜像') {
+      // 只有生产分支会累积「需要保留最近几个版本以便回滚」的镜像序列；
+      // 特性分支的镜像由下面 post 块的 always 统一收掉。
+      when { expression { isProduction() } }
+      steps {
+        // 保留最近 3 个版本以便回滚，其余删除，避免磁盘被历史镜像吃满。
+        sh '''
+          set -eu
+          docker images "${IMAGE}" --format '{{.Tag}}' | grep -E '^[0-9]+$' | sort -rn | tail -n +4 \
+            | xargs -r -I{} docker rmi -f "${IMAGE}:{}" 2>/dev/null || true
+          docker image prune -f >/dev/null 2>&1 || true
+        '''
+      }
+    }
+  }
+
+  post {
+    success {
+      script {
+        if (isProduction()) {
+          echo "✅ ${APP} #${TAG} 部署成功 → https://${PUBLIC_DOMAIN}/api-docs"
+        } else {
+          echo "✅ ${APP} 分支 ${branchName()} 构建通过（镜像 tag ${TAG}），未部署、未跑迁移 —— 只有 main 会上线。"
+        }
+      }
+    }
+    failure {
+      script {
+        if (isProduction()) {
+          echo "❌ ${APP} #${TAG} 部署失败。失败可能发生在替换容器之后，线上此刻未必可用。"
+          sh '''
+            echo "--- 当前容器状态 ---"
+            docker ps -a --filter "name=lumax" --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' || true
+          '''
+        } else {
+          echo "❌ ${APP} 分支 ${branchName()} 构建失败（未触碰线上容器与数据库）。"
+        }
+      }
+    }
+    always {
+      // 特性分支的镜像不进「保留最近 3 个」的回滚序列，用完即弃；
+      // 不清理的话每推一次分支就多一层镜像，磁盘很快见底。
+      script {
+        if (!isProduction()) {
+          sh '''
+            set -eu
+            docker rmi -f "${IMAGE}:${TAG}" 2>/dev/null || true
+            docker image prune -f >/dev/null 2>&1 || true
+          '''
+        }
+      }
+    }
+  }
 }

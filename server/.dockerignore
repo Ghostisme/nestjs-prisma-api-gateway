@@ -1,12 +1,20 @@
+# 构建上下文为 server/ 目录。
+
 node_modules
 dist
 coverage
 .git
 .gitignore
 *.md
-.env.development
 .vscode
 .cursor
 .idea
 test
 *.log
+
+# 所有本地环境文件一律排除。Dockerfile 已不再 COPY .env.production，
+# 配置全部走运行时注入；这里再兜一道，确保任何真实密钥都不会被烘进镜像层
+# （镜像层可被 docker save 导出，写进去等同于泄露）。
+.env
+.env.*
+!.env.example
