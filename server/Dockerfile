@@ -62,38 +62,25 @@ ENV NODE_ENV=production \
 
 WORKDIR /app
 
-# node 镜像自带 uid 1000 的 node 用户，直接用它，不要跑 root
+# 整体沿用 builder 的依赖树（含 Prisma 生成产物），不做 prod 裁剪 ——
+# 理由见文件头的 ③。
 COPY --from=builder --chown=node:node /app/node_modules ./node_modules
 COPY --from=builder --chown=node:node /app/dist         ./dist
 COPY --from=builder --chown=node:node /app/prisma       ./prisma
-# 有序 SQL 迁移脚本 + 执行器，供 `docker exec` 手动跑迁移用
-COPY --from=builder --chown=node:node /app/database     ./database
-COPY --from=builder --chown=node:node /app/scripts      ./scripts
 COPY --from=builder --chown=node:node /app/package.json ./package.json
-
-USER node
-
-WORKDIR /app
-
-COPY --from=prod-deps /app/node_modules ./node_modules
-# Prisma Client 的生成产物。必须在 prod-deps 的 node_modules 之后叠加，
-# 否则会被前一层覆盖掉。
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/prisma ./prisma
 
 # 有序 SQL 迁移及其运行器。迁移不走 prisma migrate，而是由
 # scripts/apply-migrations.mjs 按文件名顺序应用 database/scripts/V*.sql。
 # 打进镜像后，Jenkins 可以用同一个镜像起一次性容器执行迁移，
 # 保证「跑迁移的代码」与「跑服务的代码」永远是同一个版本。
-COPY --from=builder /app/scripts ./scripts
-COPY --from=builder /app/database ./database
+COPY --from=builder --chown=node:node /app/scripts  ./scripts
+COPY --from=builder --chown=node:node /app/database ./database
 
-# 以内置非 root 用户运行。
+# node 镜像自带 uid 1000 的 node 用户，直接用它，不要跑 root
 USER node
 
+# PORT 实际由 server.env 在运行时注入；这里给个默认值，
+# 让镜像单独 docker run（比如跑迁移）时也有合理行为。
 ENV PORT=9008
 EXPOSE 9008
 
