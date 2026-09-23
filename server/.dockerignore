@@ -12,9 +12,17 @@ coverage
 test
 *.log
 
-# 所有本地环境文件一律排除。Dockerfile 已不再 COPY .env.production，
-# 配置全部走运行时注入；这里再兜一道，确保任何真实密钥都不会被烘进镜像层
-# （镜像层可被 docker save 导出，写进去等同于泄露）。
+# ⚠️ 所有 .env 一律排除，只留样例。
+# 原来这里只排了 .env.development，一旦本地建了 .env 或 .env.production，
+# 里面的数据库密码和 API Key 就会被 COPY 进镜像层，而镜像层对任何能拿到
+# 镜像的人都是可读的。运行时环境变量统一用 --env-file 注入。
 .env
 .env.*
 !.env.example
+
+# CI / 平台专用，容器构建用不到
+Jenkinsfile
+deploy.sh
+vercel.json
+.vercelignore
+api

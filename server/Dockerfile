@@ -1,72 +1,77 @@
 # syntax=docker/dockerfile:1.7
+# ═══════════════════════════════════════════════════════════════════════
+#  Lumax Service — NestJS 11 + Prisma 7 网关
 #
-# Lumax Service（NestJS + Prisma）生产镜像。
+#  与原版相比的几处实质修正：
 #
-# 相比早期版本修掉了三处会让干净检出构建失败或运行异常的问题：
+#  ① 基础镜像 node:20 → node:24。package.json 里 engines.node 写的是
+#     "24.x"，用 20 构建属于配置漂移，某些依赖（Prisma 7）在低版本上
+#     行为不一致。
 #
-#   1. 不再 `COPY .env.production`。该文件被 .gitignore 排除（规则 `.env*`），
-#      从 GitHub 干净检出时根本不存在，COPY 必然失败。配置改为运行时由
-#      Jenkins Credentials / docker run --env-file 注入，密钥也就不会被
-#      烘进镜像层（镜像层是可导出的，写进去等于泄露）。
+#  ② 删掉了 `COPY --from=builder /app/.env.production`。仓库里根本没有
+#     这个文件（只有 .env.example），这一行会让 docker build 直接失败。
+#     环境变量改为运行时通过 --env-file 注入，这样密钥不会被烤进镜像层
+#     （镜像层是任何拿到镜像的人都能解开看的）。
 #
-#   2. `prisma generate` 与生产依赖裁剪的顺序。generate 的产物落在
-#      node_modules/.prisma/client（见 schema.prisma 的 output），若在
-#      generate 之后再跑 `pnpm install --prod`，pnpm 会按 lockfile 重建
-#      node_modules 从而清掉这份产物，容器启动即报 "@prisma/client did not
-#      initialize yet"。这里改为生产依赖单独在 prod-deps 阶段安装，
-#      再把 builder 生成的 .prisma 单独叠上去，两者互不干扰。
+#  ③ 不再做 `pnpm install --prod` 裁剪。在 pnpm 的 symlink 布局下，
+#     prisma generate 的产物位置（node_modules/.prisma/client）与 prod
+#     裁剪之后的依赖树容易错位，表现为运行时报 "@prisma/client did not
+#     initialize yet"。这里用磁盘换确定性，整体保留 builder 的依赖树。
 #
-#   3. Node 版本对齐 package.json 的 "engines": { "node": "24.x" }，
-#      不再用 node:20-alpine。
+#  ④ 额外把 database/ 和 scripts/ 拷进运行镜像。这样数据库迁移可以直接
+#     在容器里执行（docker exec ... node scripts/apply-migrations.mjs），
+#     Jenkins 那台机器完全不需要装 Node 或 psql。
 #
-# 构建上下文约定为仓库的 server/ 目录。
+#  基础镜像选 bookworm-slim 而不是 alpine：Prisma 在 musl libc 上需要
+#  另一套引擎二进制，踩坑概率明显更高，省下的几十 MB 不值这个风险。
+# ═══════════════════════════════════════════════════════════════════════
 
-# ---------- builder：全量依赖，负责编译与 Prisma Client 生成 ----------
 FROM node:24-bookworm-slim AS builder
 
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
-RUN corepack enable
+# 与 package.json 的 packageManager 字段对齐
+RUN corepack enable && corepack prepare pnpm@10.8.0 --activate
 
 WORKDIR /app
 
+# ── 依赖层 ────────────────────────────────────────────────────────────
+#  单独先拷依赖清单，这是「源码变更」和「依赖变更」在构建层面的分界线：
+#  只改业务代码时这一整层命中缓存，install 完全不执行。
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+
+# cache mount 专门优化「依赖变更」那种情况：lockfile 一改，上面那层缓存
+# 就失效、install 必然重跑，但 pnpm store 被挂成持久缓存后，已经下载过的
+# 包不用再从网上拉一遍 —— 对带 Prisma 引擎这种大包的项目差别很明显。
+RUN --mount=type=cache,id=pnpm-store-lumax-server,target=/pnpm/store \
+    pnpm install --frozen-lockfile --store-dir=/pnpm/store
 
 COPY . .
 
-# prisma.config.ts 通过 env('DATABASE_URL') 提供 datasource url，
-# 变量缺失时 CLI 直接报错。但 generate 只读 schema 不连库，
-# 给一个语法合法的占位串即可；真实地址在运行时注入。
-ENV DATABASE_URL="postgresql://placeholder:placeholder@127.0.0.1:5432/placeholder?schema=public"
-RUN pnpm prisma generate
-
-RUN pnpm build
+# 必须在 build 之前 generate —— NestJS 的 TS 编译依赖 Prisma 生成的类型
+RUN pnpm exec prisma generate \
+ && pnpm build
 
 
-# ---------- prod-deps：只装运行时依赖，产出精简 node_modules ----------
-FROM node:24-bookworm-slim AS prod-deps
+FROM node:24-bookworm-slim AS runner
 
-ENV PNPM_HOME=/pnpm
-ENV PATH=$PNPM_HOME:$PATH
-RUN corepack enable
+ENV NODE_ENV=production \
+    # 有未捕获的 Promise 拒绝时直接崩掉进程，让 Docker 的 restart 策略
+    # 接管。半死不活地继续跑（连接池已断但进程还在）比直接重启更难排查。
+    NODE_OPTIONS=--unhandled-rejections=strict
 
 WORKDIR /app
-COPY package.json pnpm-lock.yaml ./
-# --ignore-scripts：@prisma/client 的 postinstall 会尝试再跑一次 generate，
-# 但这个阶段没有 prisma/ 目录，让它跑只会失败。Client 产物从 builder 复制。
-RUN pnpm install --frozen-lockfile --prod --ignore-scripts
 
+# node 镜像自带 uid 1000 的 node 用户，直接用它，不要跑 root
+COPY --from=builder --chown=node:node /app/node_modules ./node_modules
+COPY --from=builder --chown=node:node /app/dist         ./dist
+COPY --from=builder --chown=node:node /app/prisma       ./prisma
+# 有序 SQL 迁移脚本 + 执行器，供 `docker exec` 手动跑迁移用
+COPY --from=builder --chown=node:node /app/database     ./database
+COPY --from=builder --chown=node:node /app/scripts      ./scripts
+COPY --from=builder --chown=node:node /app/package.json ./package.json
 
-# ---------- runtime ----------
-FROM node:24-bookworm-slim AS runtime
-
-ENV NODE_ENV=production
-
-# curl 供 HEALTHCHECK 使用。
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends curl \
-    && rm -rf /var/lib/apt/lists/*
+USER node
 
 WORKDIR /app
 
@@ -92,12 +97,10 @@ USER node
 ENV PORT=9008
 EXPOSE 9008
 
-# main.ts 里 Swagger 挂在 /api-docs，全局前缀为 api。
-# 这里探活打 /api/health（若该路由不存在，改成 /api-docs 亦可）。
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-    CMD curl -fsS "http://127.0.0.1:${PORT}/api/health" || exit 1
+    CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||9008)+'/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
-# 产物路径是 dist/src/main.js 而非 dist/main.js：根目录的 prisma.config.ts
-# 一同参与编译，把 TypeScript 推断出的 rootDir 抬到了 server/，
-# 于是 src/ 这一层在输出里被保留。改动 tsconfig 前不要动这个路径。
+# 产物路径是 dist/src/main.js 而不是 dist/main.js：tsconfig.build.json
+# 没有排除根目录的 prisma.config.ts，TypeScript 据此把 rootDir 推断成了
+# 项目根，于是编译结果多出一层 src/。
 CMD ["node", "dist/src/main.js"]
