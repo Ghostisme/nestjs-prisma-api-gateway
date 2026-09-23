@@ -1,0 +1,49 @@
+# 默认：让 git 自动识别文本文件，仓库内一律以 LF 存储
+* text=auto
+
+# ── 部署相关文件强制 LF ────────────────────────────────────────────────
+#  这些文件最终都要在 Linux 上被执行或解析。一旦带上 CRLF：
+#    · bash 直接报 $'\r': command not found
+#    · Jenkinsfile 里 sh '''…''' 的内容会把 \r 一起传给 shell
+#    · .env 每行值尾部多一个隐形 \r，于是数据库连接串、域名全是错的，
+#      而日志里完全看不出来，排查极其费时
+#
+#  eol=lf 是强制的，不受各人本地 core.autocrlf 配置影响。
+*.sh           text eol=lf
+Dockerfile     text eol=lf
+Dockerfile.*   text eol=lf
+.dockerignore  text eol=lf
+Jenkinsfile    text eol=lf
+*.conf         text eol=lf
+*.template     text eol=lf
+.env.example   text eol=lf
+
+*.ts   text eol=lf
+*.tsx  text eol=lf
+*.js   text eol=lf
+*.mjs  text eol=lf
+*.json text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+*.sql  text eol=lf
+*.css  text eol=lf
+*.html text eol=lf
+*.md   text eol=lf
+*.prisma text eol=lf
+
+# Windows 专用脚本保持 CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# 二进制 / 不可转换内容
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.ttf  binary
+*.pem  binary
