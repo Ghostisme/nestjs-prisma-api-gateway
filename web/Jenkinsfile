@@ -245,14 +245,17 @@ pipeline {
           set -e
           echo ">>> 同步静态产物到 ${WEB_ROOT}"
 
-          # ⚠️ 不能用 rsync -a。它等价于 -rlptgoD，其中 -g/-o 会尝试保留属主
-          #    和组，而目标目录属主是 root:root（Jenkins 只有 ACL 授予的读写
-          #    权限，改所有权是另一回事，非 root 做不到），于是报
-          #    chgrp ... Operation not permitted 并以 code 23 退出。
+          # ⚠️ 不能用 rsync -a（= -rlptgoD）。目标目录 ${WEB_ROOT} 属主是
+          #    root:root，Jenkins 只有 ACL 授予的读写权限 —— 能增删文件，
+          #    但不能 chown/chmod 目录本身（那要求是属主或 root）。于是：
+          #      -o/-g → chgrp "...web/." failed: Operation not permitted
+          #      -p    → failed to set permissions on "...web/."
+          #      -t    → failed to set times on "...web/."
+          #    三者都会让 rsync 以 code 23 退出。
           #
-          #    静态发布本来就不需要保留属主：文件由 jenkins 创建，nginx 只要
-          #    读权限（默认 644 足够）。所以显式关掉这两项。
-          RSYNC_OPTS="-a --no-owner --no-group --human-readable"
+          #    静态发布不需要同步任何元数据：文件由 jenkins 新建，权限交给
+          #    umask，nginx 只要读得到就行。所以只同步内容。
+          RSYNC_OPTS="-rl --no-perms --no-owner --no-group --omit-dir-times --human-readable"
 
           # 备份上一版，便于快速回退（只留一份）。
           #
@@ -270,6 +273,19 @@ pipeline {
           # 资源始终是存在的，不会出现「新 index.html 已就位、但它引用的
           # 新 assets 还没传完」导致的白屏窗口。
           rsync $RSYNC_OPTS --delete-after --exclude='.prev' web-dist/ "${WEB_ROOT}/"
+
+          # 关掉 --perms 之后文件权限由 Jenkins 进程的 umask 决定。通常是
+          # 022（→ 644/755，nginx 读得到），但这个值取决于 systemd 单元或
+          # 容器配置，不该假设。权限不对的表现是站点 403，而 nginx 错误日志
+          # 里只有一句 "Permission denied"，不容易联想到发布环节 —— 所以在
+          # 这里显式兜一道。
+          #
+          # -mindepth 1 很关键：跳过 ${WEB_ROOT} 本身（root 拥有，chmod 不了）。
+          if [ "$(stat -c %a "${WEB_ROOT}/index.html" 2>/dev/null || echo 0)" != "644" ]; then
+            echo "    修正文件权限（当前 umask: $(umask)）"
+            find "${WEB_ROOT}" -mindepth 1 -type f -exec chmod 644 {} + 2>/dev/null || true
+            find "${WEB_ROOT}" -mindepth 1 -type d -exec chmod 755 {} + 2>/dev/null || true
+          fi
 
           echo ">>> 当前站点内容"
           ls -la "${WEB_ROOT}" | head -20
@@ -311,7 +327,8 @@ pipeline {
             set +e
             if [ -f "${WEB_ROOT}/.prev/index.html" ]; then
               echo "── 回滚到上一版静态产物 ─────────────────────────"
-              rsync -a --no-owner --no-group --delete-after --exclude='.prev' \
+              rsync -rl --no-perms --no-owner --no-group --omit-dir-times \
+                --delete-after --exclude='.prev' \
                 "${WEB_ROOT}/.prev/" "${WEB_ROOT}/"
               echo "已回滚"
             else
