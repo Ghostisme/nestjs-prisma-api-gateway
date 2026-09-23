@@ -48,8 +48,19 @@ RUN --mount=type=cache,id=pnpm-store-lumax-server,target=/pnpm/store \
 
 COPY . .
 
-# 必须在 build 之前 generate —— NestJS 的 TS 编译依赖 Prisma 生成的类型
-RUN pnpm exec prisma generate \
+# 必须在 build 之前 generate —— NestJS 的 TS 编译依赖 Prisma 生成的类型。
+#
+# DATABASE_URL 这个占位值是必需的，不是多余：prisma.config.ts 里用了
+# Prisma 7 的 `env('DATABASE_URL')`，它在**加载配置文件**时就要求该变量
+# 存在，否则直接抛 PrismaConfigEnvError。而构建阶段既没有这个环境变量，
+# 也没有 .env.development（.dockerignore 刻意排除了所有 .env*，避免把
+# 密钥烤进镜像层）。
+#
+# 用占位值是安全的：generate 只读 schema.prisma 生成客户端代码，不会去
+# 连数据库。而且这里是行内变量而非 ENV，不会残留到镜像的环境里。
+# 运行时的真实连接串由 server.env 注入。
+RUN DATABASE_URL="postgresql://build:build@127.0.0.1:5432/build?schema=public" \
+    pnpm exec prisma generate \
  && pnpm build
 
 
