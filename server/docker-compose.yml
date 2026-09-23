@@ -1,0 +1,55 @@
+# ═══════════════════════════════════════════════════════════════════════
+#  lumax 后端 — 独立编排
+#
+#  由 server/Jenkinsfile 这样调用（工作目录是仓库根）：
+#    docker compose --env-file /opt/portfolio/lumax/server.env \
+#                   -f server/docker-compose.yml up -d
+#
+#  前端不在这个栈里：它是 Vite 打出来的纯静态产物，由宿主机 nginx 直接
+#  托管，发布就是一次 rsync，零重启。前后端依然是完全分离的两个发布单元
+#  （两条独立流水线），只是前端不需要容器。
+#
+#  Postgres 和 Redis 由 portfolio-infra 栈提供，这里通过外部网络
+#  portfolio-net 用容器名直连。
+# ═══════════════════════════════════════════════════════════════════════
+name: lumax-api
+
+services:
+  server:
+    build:
+      # 相对于本文件所在目录（server/）
+      context: .
+      dockerfile: Dockerfile
+    image: lumax-server:${IMAGE_TAG:-latest}
+    container_name: lumax-server
+    restart: unless-stopped
+
+    # 这个栈只有一个容器，不存在同名变量冲突，可以整体注入
+    env_file:
+      - ${APP_ENV_FILE:-/opt/portfolio/lumax/server.env}
+
+    ports:
+      - "127.0.0.1:${API_HOST_PORT:-9008}:9008"
+
+    # Prisma 7 + NestJS + 定时任务聚合，512M 偏紧
+    mem_limit: 1g
+    cpus: 1.5
+
+    # 交给 portfolio-infra 栈里的 autoheal 看管，unhealthy 时自动重启
+    labels:
+      autoheal: "true"
+
+    networks:
+      portfolio:
+        aliases: [lumax-server]
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "3"
+
+networks:
+  portfolio:
+    external: true
+    name: portfolio-net

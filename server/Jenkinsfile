@@ -1,67 +1,13 @@
-// Lumax Service（API Gateway）部署流水线
+// ═══════════════════════════════════════════════════════════════════════
+//  lumax / 后端 — 独立流水线
 //
-// 本文件替换了早期的 PM2 版本。原方案走 nvm + rsync + pm2 reload，与现在
-// 「后端统一跑 Docker」的部署约定冲突，且宿主机上要额外维护一套 Node/PM2。
+//  Jenkins 建 job 时（类型选「流水线」）Script Path 填：server/Jenkinsfile
+//  （Jenkins 把整个仓库 checkout 到工作区根，下面路径都从仓库根算起）
 //
-// 形态：Jenkins 从 GitHub 拉代码 → 本机构建镜像 → 跑数据库迁移 → 换掉旧容器。
-// 镜像只存在本机 Docker，不推远端 registry。
-//
-// 产出一个容器：
-//   lumax-api —— NestJS 服务，监听 127.0.0.1:19008
-//
-// 只绑回环地址，公网入口由宿主机 nginx 在 gateway.darkrich.com 上反代。
-// main.ts 里 setGlobalPrefix("api")，Swagger 挂 /api-docs（均在全局前缀之外
-// 单独挂载），nginx 转发时两个路径都要保留原样、不要 strip。
-//
-// 前置条件：
-//   1. Jenkins 执行用户能访问 Docker daemon。
-//   2. 已建好 Secret file 凭据 lumax-env（务必包含 AUTH_MOCK=false）。
-//   3. docker network create appnet 已执行。
-//   4. PostgreSQL 的 lumax 库与账号已创建（建表由本流水线的迁移阶段完成）。
-//
-// 分支策略（多分支流水线）：
-//   main     —— 构建 + 迁移 + 部署 + 健康检查，即线上环境。
-//   其它分支 —— 只构建，验证「这个分支能否成功打出镜像」。
-//
-// 这份流水线对分支守卫的要求比另两个项目更硬：数据库迁移是【不可回滚】的写操作，
-// 特性分支上一份没写完的 V0xx.sql 一旦跑到生产库，服务回滚也救不回来。
-// 因此迁移与之后的所有 stage 一律受 isProduction() 保护。
-
-// ---------------------------------------------------------------------------
-// 多分支支持
-//
-// 多分支流水线会为每个分支各建一条子流水线，并注入 BRANCH_NAME。
-// 经典 Pipeline 任务没有这个变量，此处回退成 main，让同一份文件在两种
-// 任务类型下都能正常工作（迁移任务类型时不需要改 Jenkinsfile）。
-// ---------------------------------------------------------------------------
-
-/** 当前分支名。经典 Pipeline 任务下回退为 main。 */
-String branchName() {
-  return env.BRANCH_NAME ?: 'main'
-}
-
-/** 是否为生产分支。只有生产分支允许改动线上容器与生产数据库。 */
-boolean isProduction() {
-  return branchName() == 'main'
-}
-
-/**
- * 镜像标签。
- *
- * main 用纯构建号，维持「数字 tag = 可回滚的生产版本」这一约定 ——
- * 清理阶段用 ^[0-9]+$ 过滤要删的旧版本，特性分支的 tag 必须落在这个集合之外，
- * 否则会被当成旧的生产版本误删。
- *
- * 其它分支加分支名前缀：多分支流水线的 BUILD_NUMBER 是【每分支独立计数】的，
- * 不加前缀时 feature-a 的 #1 和 feature-b 的 #1 会抢同一个 tag。
- */
-String imageTag() {
-  if (isProduction()) {
-    return env.BUILD_NUMBER
-  }
-  // Docker tag 合法字符集是 [A-Za-z0-9_.-]，feature/xxx 这类分支名含 / 必须转义。
-  return branchName().replaceAll('[^A-Za-z0-9._-]', '-') + '-' + env.BUILD_NUMBER
-}
+//  数据库迁移单独用参数控制，默认不执行 —— 这个项目用的是有序 SQL 脚本
+//  而不是迁移框架，没有「已执行」记录表，不能挂在每次部署上。详见下面
+//  RUN_MIGRATIONS 的说明。
+// ═══════════════════════════════════════════════════════════════════════
 
 pipeline {
   agent any
@@ -69,212 +15,383 @@ pipeline {
   options {
     timestamps()
     timeout(time: 30, unit: 'MINUTES')
-    buildDiscarder(logRotator(numToKeepStr: '20'))
     disableConcurrentBuilds()
+    buildDiscarder(logRotator(numToKeepStr: '20'))
   }
 
+  // ── 触发方式 ──────────────────────────────────────────────────────
+  //  构建哪个分支由 job 配置里的 Branch Specifier 决定（填 */main），
+  //  下面的阶段不再判断分支 —— 也就是说改那个字段就等于改部署目标，
+  //  别随手改成 */develop，那会把开发分支的代码发到生产。
+  triggers {
+    // GitHub webhook 推送即触发。
+    // job 配置里也要勾上 "GitHub hook trigger for GITScm polling"，
+    // 两者配合才生效。
+    githubPush()
+    // 兜底：每 4 小时轮询一次，防止 webhook 偶尔丢失（网络抖动、
+    // GitHub 侧重试失败）。不需要可以删掉这行。
+    pollSCM('H H/4 * * *')
+  }
   parameters {
-    // 迁移是有序 SQL（V001…V013），脚本本身对已应用的版本是幂等跳过的。
-    // 但真出问题时需要一个不跑迁移、只换服务的逃生通道，故留此开关。
+    booleanParam(
+      name: 'FORCE_REBUILD',
+      defaultValue: false,
+      description: '忽略变更检测，强制重新打包镜像。注意：只是改了 server.env 的话不用勾这个，勾 REDEPLOY 就够了。'
+    )
+    booleanParam(
+      name: 'REDEPLOY',
+      defaultValue: false,
+      description: '不重新打包，只用当前镜像重新部署一次，让容器加载新的 server.env。改了数据库密码、AUTH_MOCK、SCHEDULER_ENABLED 之后用这个。'
+    )
     booleanParam(
       name: 'RUN_MIGRATIONS',
-      defaultValue: true,
-      description: '部署前执行数据库迁移（database/scripts/V*.sql）。仅在排障时关闭。'
+      defaultValue: false,
+      description: '''执行数据库迁移（database/scripts/V001…V013）。
+⚠️ 默认关闭，只在首次部署或明确新增了迁移脚本时才勾。
+这个项目没有迁移记录表，apply-migrations.mjs 每次都从头重放全部脚本，
+其中 V003/V011/V012 是 demo 数据的 INSERT —— 重复执行会主键冲突或造出
+重复数据。要续跑请配合下面的 MIGRATION_START_FROM。'''
+    )
+    string(
+      name: 'MIGRATION_START_FROM',
+      defaultValue: '',
+      description: '从指定脚本开始执行迁移，例如填 V007 就只跑 V007 及之后的。留空 = 从 V001 全量重放。'
+    )
+    booleanParam(
+      name: 'NO_CACHE',
+      defaultValue: false,
+      description: '禁用 Docker 层缓存。只在怀疑缓存脏了时用。'
     )
   }
 
   environment {
-    APP           = 'lumax'
-    NETWORK       = 'appnet'
-
-    IMAGE         = 'lumax-api'
-    CONTAINER     = 'lumax-api'
-
-    HOST_PORT     = '19008'
-    APP_PORT      = '9008'
-
-    PUBLIC_DOMAIN = 'gateway.darkrich.com'
-
-    TAG           = "${imageTag()}"
+    IMAGE        = 'lumax-server'
+    CONTAINER    = 'lumax-server'
+    SERVICE      = 'server'
+    COMPOSE_FILE = 'server/docker-compose.yml'
+    APP_ENV_FILE = '/opt/portfolio/lumax/server.env'
+    BUILD_TAG_   = "${env.BUILD_NUMBER}-${env.GIT_COMMIT?.take(7) ?: 'nogit'}"
+    DOCKER_BUILDKIT = '1'
   }
 
   stages {
 
-    stage('检出代码') {
+    stage('环境自检') {
       steps {
-        checkout scm
-        sh 'git log -1 --pretty="提交: %h %an %s"'
-      }
-    }
-
-    stage('构建镜像') {
-      steps {
-        // 上下文取 server/，与 Dockerfile 内的 COPY 路径约定一致。
         sh '''
-          set -eu
-          docker build \
-            -f server/Dockerfile \
-            -t "${IMAGE}:${TAG}" \
-            -t "${IMAGE}:latest" \
-            server
-        '''
-      }
-    }
+          set -e
+          echo ">>> Docker  $(docker --version)"
+          echo ">>> Compose $(docker compose version --short)"
 
-    stage('数据库迁移') {
-      // 两个条件缺一不可：
-      //   isProduction()        —— 迁移直接写生产库，特性分支绝不能触发。
-      //   params.RUN_MIGRATIONS —— 排障时的逃生开关。
-      // 注意：多分支流水线里 parameters 要等第一次构建把定义登记进 Jenkins 之后
-      // 才生效，首次扫描触发的那次构建会用 defaultValue（true），这符合预期。
-      when { expression { isProduction() && params.RUN_MIGRATIONS } }
-      steps {
-        withCredentials([file(credentialsId: 'lumax-env', variable: 'ENV_FILE')]) {
-          // 用刚构建出的同一个镜像起一次性容器执行迁移。这样「跑迁移的代码」
-          // 与「跑服务的代码」必然是同一个版本，不会出现迁移脚本比服务旧/新的错配。
-          //
-          // --rm 保证容器退出即删；迁移失败时 docker run 返回非零，
-          // set -e 会让流水线在此中断，绝不会带着半截 schema 去换服务容器。
-          sh '''
-            set -eu
-            docker run --rm \
-              --network "${NETWORK}" \
-              --env-file "${ENV_FILE}" \
-              "${IMAGE}:${TAG}" \
-              node scripts/apply-migrations.mjs
-          '''
+          if [ ! -f "${APP_ENV_FILE}" ]; then
+            echo "✗ 找不到 ${APP_ENV_FILE}"
+            echo "  服务器还没初始化，见 _infra/README.md 的「首次部署」章节"
+            exit 1
+          fi
+
+          docker network inspect portfolio-net >/dev/null 2>&1 \\
+            || { echo "✗ Docker 网络 portfolio-net 不存在，见 _infra/README.md"; exit 1; }
+
+          # 两个都是硬依赖：Prisma 连不上库整个网关就是空壳，
+          # Redis 挂了配额限流器会直接抛错
+          for c in portfolio-postgres portfolio-redis; do
+            docker ps --filter "name=$c" --filter "status=running" --format '{{.Names}}' \\
+              | grep -q "$c" || { echo "✗ ${c} 未运行，lumax 后端强依赖它"; exit 1; }
+          done
+        '''
+        script {
+          env.PREV_IMAGE = sh(
+            script: "docker inspect -f '{{.Config.Image}}' ${env.CONTAINER} 2>/dev/null || true",
+            returnStdout: true).trim()
+          echo "当前在跑的镜像：${env.PREV_IMAGE ?: '(无)'}"
         }
       }
     }
 
-    stage('部署服务') {
-      // 容器名与宿主机端口都是硬编码的单例，非生产分支一旦执行就会顶掉线上服务。
-      when { expression { isProduction() } }
+    stage('变更分析') {
       steps {
-        withCredentials([file(credentialsId: 'lumax-env', variable: 'ENV_FILE')]) {
-          sh '''
-            set -eu
-            docker rm -f "${CONTAINER}" 2>/dev/null || true
+        script {
+          def watchPaths = ['server/']
+          def depFiles   = ['server/package.json', 'server/pnpm-lock.yaml']
+          def infraFiles = ['server/Dockerfile', 'server/docker-compose.yml',
+                            'server/Jenkinsfile', 'server/.dockerignore']
 
-            docker run -d \
-              --name "${CONTAINER}" \
-              --network "${NETWORK}" \
-              --restart unless-stopped \
-              --env-file "${ENV_FILE}" \
-              -e PORT="${APP_PORT}" \
-              -p 127.0.0.1:${HOST_PORT}:${APP_PORT} \
-              --log-opt max-size=10m --log-opt max-file=3 \
-              "${IMAGE}:${TAG}"
+          def previous = env.GIT_PREVIOUS_SUCCESSFUL_COMMIT
+          def changed = null
+
+          if (params.FORCE_REBUILD) {
+            echo '已勾选 FORCE_REBUILD → 强制重新打包'
+          } else if (!previous) {
+            echo '没有「上次成功构建」记录（首次构建或历史被清理）→ 全量打包'
+          } else {
+            def diff = sh(
+              script: "git diff --name-only ${previous} ${env.GIT_COMMIT} 2>/dev/null || true",
+              returnStdout: true).trim()
+            if (diff) {
+              changed = diff.split('\n').collect { it.trim() }.findAll { it }
+            } else {
+              echo '拿不到有效 diff（可能 force push 过）→ 全量打包'
+            }
+          }
+
+          boolean srcChanged = false
+          boolean depChanged = false
+          boolean prismaChanged = false
+          boolean migrationChanged = false
+          int srcCount = 0
+          def changedDepFiles = []
+
+          if (changed == null) {
+            srcChanged = true
+            depChanged = true
+          } else {
+            def mine = changed.findAll { p -> watchPaths.any { w -> p.startsWith(w) } }
+
+            changedDepFiles = mine.findAll { it in depFiles }
+            depChanged = !changedDepFiles.isEmpty()
+
+            prismaChanged    = mine.any { it.startsWith('server/prisma/') }
+            migrationChanged = mine.any { it.startsWith('server/database/scripts/') }
+
+            def srcFiles = mine.findAll { p ->
+              !(p in depFiles) && !(p ==~ /(?i).*\.(md|txt)$/)
+            }
+            srcCount = srcFiles.size()
+            srcChanged = srcCount > 0
+
+            if (mine.any { it in infraFiles }) {
+              echo '构建/编排文件有变更 → 强制重新打包'
+              srcChanged = true
+            }
+          }
+
+          boolean needBuild = srcChanged || depChanged
+
+          if (!needBuild && !env.PREV_IMAGE) {
+            echo '本地没有可复用的旧镜像 → 强制打包'
+            needBuild = true
+            srcChanged = true
+          }
+
+          boolean needDeploy = needBuild || params.REDEPLOY
+
+          if (!needBuild && needDeploy) {
+            def prev = env.PREV_IMAGE
+            if (!prev) {
+              error 'REDEPLOY 需要一个已存在的镜像，但当前没有容器在跑'
+            }
+            env.DEPLOY_TAG = prev.contains(':') ? prev.substring(prev.lastIndexOf(':') + 1) : 'latest'
+            echo "只重新部署，沿用镜像 tag：${env.DEPLOY_TAG}"
+          } else {
+            env.DEPLOY_TAG = env.BUILD_TAG_
+          }
+
+          env.NEED_BUILD   = needBuild.toString()
+          env.NEED_DEPLOY  = needDeploy.toString()
+          env.DEPS_CHANGED = depChanged.toString()
+
+          // ── 打包决策表 ──────────────────────────────────────────
+          String basis = previous ? "${previous.take(7)}（上次成功构建）" : '无（首次构建）'
+          String srcLine = srcChanged ? "是   ${srcCount} 个文件" : '否'
+          if (prismaChanged) {
+            srcLine += '\n                    含 prisma/ → 镜像构建时会重新 generate 客户端'
+          }
+          String depLine
+          if (depChanged) {
+            depLine = "是   ${changedDepFiles.join(', ')}\n                    → install 层缓存失效，本次会重跑 pnpm install"
+          } else {
+            depLine = '否   → install 层命中缓存，完全跳过依赖安装'
+          }
+          String verdict
+          if (needBuild) {
+            verdict = "重新打包镜像并部署（tag=${env.DEPLOY_TAG}）"
+          } else if (needDeploy) {
+            verdict = "只重新部署，不打包（沿用 ${env.DEPLOY_TAG}）"
+          } else {
+            verdict = '跳过 —— 本模块无变更'
+          }
+
+          echo """
+────────────────────────────────────────────────────────────────
+  打包决策 · lumax / server
+────────────────────────────────────────────────────────────────
+  比较基点      ${basis}
+  本次提交      ${env.GIT_COMMIT?.take(7) ?: '-'}
+
+  源码变更      ${srcLine}
+  依赖变更      ${depLine}
+
+  结论          ${verdict}
+────────────────────────────────────────────────────────────────
+"""
+
+          if (migrationChanged && !params.RUN_MIGRATIONS) {
+            echo '''
+⚠ 检测到 database/scripts/ 下的迁移脚本有变更，但本次不会自动执行迁移。
+  如需应用，请重跑本流水线并勾选 RUN_MIGRATIONS，同时用
+  MIGRATION_START_FROM 指定起始脚本，以免重放已经执行过的部分。
+'''
+          }
+
+          if (needBuild) {
+            currentBuild.description = "打包 ${env.DEPLOY_TAG}"
+          } else if (needDeploy) {
+            currentBuild.description = "仅重部署 ${env.DEPLOY_TAG}"
+          } else {
+            currentBuild.description = '无变更，已跳过'
+          }
+        }
+      }
+    }
+
+    stage('打包镜像') {
+      when { environment name: 'NEED_BUILD', value: 'true' }
+      steps {
+        script {
+          if (env.DEPS_CHANGED == 'true') {
+            echo '依赖清单有变更：pnpm install 会重跑，但 pnpm store 挂了 cache mount，已下载过的包会直接复用'
+          }
+          withEnv(["IMAGE_TAG=${env.DEPLOY_TAG}"]) {
+            sh """
+              set -e
+              docker compose \\
+                --env-file '${env.APP_ENV_FILE}' \\
+                -f '${env.COMPOSE_FILE}' \\
+                build ${params.NO_CACHE ? '--no-cache' : ''} ${env.SERVICE}
+            """
+          }
+        }
+      }
+    }
+
+    stage('数据库迁移') {
+      when { expression { params.RUN_MIGRATIONS } }
+      steps {
+        script {
+          def startFrom = params.MIGRATION_START_FROM?.trim()
+
+          // 用哪个镜像跑迁移：本次打包了就用新镜像，没打包就用正在跑的那个
+          String imageRef
+          if (env.NEED_BUILD == 'true') {
+            imageRef = "${env.IMAGE}:${env.DEPLOY_TAG}"
+          } else {
+            imageRef = env.PREV_IMAGE ?: "${env.IMAGE}:latest"
+          }
+
+          if (startFrom) {
+            echo "从 ${startFrom} 开始执行迁移"
+          } else {
+            echo '⚠ 从 V001 全量重放迁移（若库里已有数据，demo 数据脚本可能冲突）'
+          }
+
+          // 用一次性容器跑迁移，而不是 docker exec 进长驻容器：首次部署时
+          // 长驻容器还不存在，而镜像里已经带了 database/ 和 scripts/，
+          // 一次性容器随时可跑，跑完即销毁。
+          sh """
+            set -e
+            docker run --rm \\
+              --network portfolio-net \\
+              --env-file '${env.APP_ENV_FILE}' \\
+              '${imageRef}' \\
+              node scripts/apply-migrations.mjs ${startFrom ?: ''}
+          """
+        }
+      }
+    }
+
+    stage('部署') {
+      when { environment name: 'NEED_DEPLOY', value: 'true' }
+      steps {
+        withEnv(["IMAGE_TAG=${env.DEPLOY_TAG}"]) {
+          sh '''
+            set -e
+            echo ">>> 滚动更新（tag=${IMAGE_TAG}）"
+            docker compose --env-file "${APP_ENV_FILE}" -f "${COMPOSE_FILE}" up -d
+            docker compose --env-file "${APP_ENV_FILE}" -f "${COMPOSE_FILE}" ps
           '''
         }
       }
     }
 
     stage('健康检查') {
-      // 探的是线上端口，非生产分支根本没部署，跑这一步只会探到上一次 main 的结果，
-      // 给出虚假的绿灯。
-      when { expression { isProduction() } }
+      when { environment name: 'NEED_DEPLOY', value: 'true' }
       steps {
-        // 这个服务启动时要建 Prisma 连接池并连 Redis，比纯静态服务慢，
-        // 给到 90 秒上限。
-        sh '''
-          set -eu
-
-          ok=0
-          for i in $(seq 1 45); do
-            # 优先探 /api/health；该路由不存在时回退探 /api-docs，
-            # 后者只要 Nest 起来且 SWAGGER_ENABLED=true 就一定有响应。
-            if curl -fsS --max-time 3 "http://127.0.0.1:${HOST_PORT}/api/health" >/dev/null 2>&1 \
-               || curl -fsS --max-time 3 "http://127.0.0.1:${HOST_PORT}/api-docs" >/dev/null 2>&1; then
-              ok=1
-              break
-            fi
-            sleep 2
-          done
-
-          if [ "$ok" != "1" ]; then
-            echo "❌ 服务在 90 秒内未就绪"
-            echo "--- ${CONTAINER} 最近日志 ---"
-            docker logs --tail 120 "${CONTAINER}" || true
+        script {
+          int rc = sh(returnStatus: true, script: '''
+            deadline=$(( $(date +%s) + 180 ))
+            state=unknown
+            while [ "$(date +%s)" -lt "$deadline" ]; do
+              state=$(docker inspect -f '{{.State.Health.Status}}' "${CONTAINER}" 2>/dev/null || echo missing)
+              if [ "$state" = "healthy" ]; then
+                echo "✓ ${CONTAINER} healthy"
+                exit 0
+              fi
+              echo "等待 ${CONTAINER}($state)"
+              sleep 5
+            done
+            echo "✗ 健康检查超时，最后状态: $state"
             exit 1
-          fi
+          ''')
+          if (rc != 0) {
+            echo '── 容器日志 ──────────────────────────────────────'
+            sh 'docker logs --tail 120 "${CONTAINER}" 2>&1 || true'
+            error '健康检查未通过'
+          }
 
-          echo "✅ 服务就绪: http://127.0.0.1:${HOST_PORT}"
-        '''
-      }
-    }
-
-    stage('校验生产配置') {
-      // 校验的是运行中的线上容器，非生产分支没有这个容器，docker exec 必然失败。
-      when { expression { isProduction() } }
-      steps {
-        // AUTH_MOCK=true 会跳过 Redis opaque-token 校验并注入 mock 用户，
-        // 等同于鉴权全开。这是最容易被 .env 复制粘贴带到生产的一项，
-        // 因此在部署后显式校验容器内的实际取值，发现即让构建变黄。
-        sh '''
-          set -eu
-          mock=$(docker exec "${CONTAINER}" printenv AUTH_MOCK 2>/dev/null || echo "unset")
-          if [ "$mock" = "true" ]; then
-            echo "⚠️  严重：容器内 AUTH_MOCK=true，鉴权处于绕过状态！"
-            echo "    请立即修正凭据 lumax-env 中的该项为 false 并重新部署。"
-            exit 1
-          fi
-          echo "✅ AUTH_MOCK=${mock}（非 true，鉴权正常）"
-        '''
-      }
-    }
-
-    stage('清理旧镜像') {
-      // 只有生产分支会累积「需要保留最近几个版本以便回滚」的镜像序列；
-      // 特性分支的镜像由下面 post 块的 always 统一收掉。
-      when { expression { isProduction() } }
-      steps {
-        // 保留最近 3 个版本以便回滚，其余删除，避免磁盘被历史镜像吃满。
-        sh '''
-          set -eu
-          docker images "${IMAGE}" --format '{{.Tag}}' | grep -E '^[0-9]+$' | sort -rn | tail -n +4 \
-            | xargs -r -I{} docker rmi -f "${IMAGE}:{}" 2>/dev/null || true
-          docker image prune -f >/dev/null 2>&1 || true
-        '''
+          // /api/health/ready 会真正探一次 DB 和 Redis 的可达性，
+          // 容器 healthy 只代表 HTTP 端口活着
+          sh '''
+            set +e
+            echo ">>> /api/health/ready 详情"
+            docker exec "${CONTAINER}" node -e "
+              fetch('http://127.0.0.1:' + (process.env.PORT || 9008) + '/api/health/ready')
+                .then(r => r.text()).then(t => console.log(t))
+                .catch(e => console.error('探测失败:', e.message))
+            "
+          '''
+        }
       }
     }
   }
 
   post {
-    success {
+    failure {
       script {
-        if (isProduction()) {
-          echo "✅ ${APP} #${TAG} 部署成功 → https://${PUBLIC_DOMAIN}/api-docs"
-        } else {
-          echo "✅ ${APP} 分支 ${branchName()} 构建通过（镜像 tag ${TAG}），未部署、未跑迁移 —— 只有 main 会上线。"
+        boolean deployed = env.NEED_DEPLOY == 'true'
+        if (deployed && env.PREV_IMAGE) {
+          echo '── 回滚到上一版镜像 ───────────────────────────────'
+          withEnv(['IMAGE_TAG=rollback']) {
+            sh """
+              set +e
+              docker tag '${env.PREV_IMAGE}' '${env.IMAGE}:rollback'
+              docker compose --env-file '${env.APP_ENV_FILE}' -f '${env.COMPOSE_FILE}' up -d
+              docker compose --env-file '${env.APP_ENV_FILE}' -f '${env.COMPOSE_FILE}' ps
+            """
+          }
+          echo "已回滚。失败版本 ${env.DEPLOY_TAG} 的镜像仍保留，可本地复现排查。"
+        } else if (deployed) {
+          echo '没有可回滚的上一版镜像（首次部署失败），请看上面的容器日志。'
         }
       }
     }
-    failure {
+    success {
       script {
-        if (isProduction()) {
-          echo "❌ ${APP} #${TAG} 部署失败。失败可能发生在替换容器之后，线上此刻未必可用。"
+        if (env.NEED_BUILD == 'true') {
           sh '''
-            echo "--- 当前容器状态 ---"
-            docker ps -a --filter "name=lumax" --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' || true
+            set +e
+            docker images "${IMAGE}" --format '{{.Tag}}' \
+              | grep -E '^[0-9]+-' | sort -t- -k1,1 -n -r | tail -n +4 \
+              | while read -r tag; do
+                  echo "清理旧镜像 ${IMAGE}:${tag}"
+                  docker rmi "${IMAGE}:${tag}" >/dev/null 2>&1
+                done
+            docker image prune -f >/dev/null 2>&1
           '''
-        } else {
-          echo "❌ ${APP} 分支 ${branchName()} 构建失败（未触碰线上容器与数据库）。"
         }
       }
     }
     always {
-      // 特性分支的镜像不进「保留最近 3 个」的回滚序列，用完即弃；
-      // 不清理的话每推一次分支就多一层镜像，磁盘很快见底。
-      script {
-        if (!isProduction()) {
-          sh '''
-            set -eu
-            docker rmi -f "${IMAGE}:${TAG}" 2>/dev/null || true
-            docker image prune -f >/dev/null 2>&1 || true
-          '''
-        }
-      }
+      sh 'docker builder prune -f --filter until=168h >/dev/null 2>&1 || true'
     }
   }
 }
