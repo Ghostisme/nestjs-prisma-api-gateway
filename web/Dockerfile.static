@@ -1,0 +1,71 @@
+# syntax=docker/dockerfile:1.7
+# ═══════════════════════════════════════════════════════════════════════
+#  Lumax Agent 前端 — 只负责「构建并导出静态产物」，不产出运行镜像
+#
+#  用法（BuildKit 的 local 导出）：
+#    docker build -f web/Dockerfile.static --target export \
+#                 --output type=local,dest=web-dist web
+#
+#  产物直接出现在宿主机的 web-dist/ 目录，再 rsync 到 nginx 站点根目录。
+#
+#  为什么不用 web/Dockerfile（那个是 nginx:alpine 运行镜像）：
+#  这台 VPS 上 nginx 装在宿主机，四个站点的 TLS、HSTS、ACME 续期都由它
+#  统一管。再为一个纯静态站点多跑一个 nginx 容器，等于多一层反代、多一份
+#  配置要维护，却没有任何收益 —— 静态文件发布也就退化成一次 rsync，
+#  零重启、零冷启动。
+#
+#  另一个好处是 Jenkins 所在的机器不需要装 Node 和 pnpm：整个构建都发生
+#  在容器里，而产出的文件属主还是 Jenkins 自己，不会出现挂载卷带来的
+#  root 权限文件。
+# ═══════════════════════════════════════════════════════════════════════
+
+FROM node:24-bookworm-slim AS builder
+
+ENV PNPM_HOME=/pnpm
+ENV PATH=$PNPM_HOME:$PATH
+RUN corepack enable && corepack prepare pnpm@10.8.0 --activate
+
+WORKDIR /app
+
+# ── 依赖层 ────────────────────────────────────────────────────────────
+#  单独先拷依赖清单，是「源码变更」和「依赖变更」在构建层面的分界线：
+#  只改业务代码时这一层整层命中缓存，install 完全不执行。
+COPY package.json pnpm-lock.yaml ./
+
+# --ignore-scripts 是必须的，不是优化：
+#  package.json 的 preinstall 钩子是 `lefthook install`，它要往 .git/hooks
+#  写文件，而 .git 不在构建上下文里（也不该在），于是这一步必然失败并把
+#  整个 pnpm install 一起带崩。
+#  跳过脚本对本项目安全：esbuild / lightningcss / biome 都通过
+#  optionalDependencies 分发平台二进制，不依赖 postinstall；唯一受影响的
+#  是 msw 往 public/ 释放 service worker，而那只服务于 mock 模式
+#  （生产构建 VITE_USE_MOCK_AUTH=false，不走 msw）。
+#
+# cache mount 专门用来优化「依赖变更」这种情况：lockfile 一改，上面那层
+# 缓存就失效、install 必然重跑，但 pnpm store 被挂成持久缓存后，已经下载
+# 过的包不用再从网上拉一遍，只装真正新增或变更的那几个。
+RUN --mount=type=cache,id=pnpm-store-lumax-web,target=/pnpm/store \
+    pnpm install --frozen-lockfile --ignore-scripts --store-dir=/pnpm/store
+
+# ── 源码层 ────────────────────────────────────────────────────────────
+COPY . .
+
+# Vite 的 loadEnv 会读 .env.<mode>。这份文件由 bootstrap.sh 生成到
+# /opt/portfolio/lumax/web-build.env，再由 Jenkins 拷成 web/.env.production。
+# 仓库里只有 .env.example，不拷的话所有 VITE_* 都会落到代码里的兜底值。
+ARG VITE_MODE=production
+
+# 直接调 vite build，不走 package.json 的 build:prod（那个会先跑一遍 tsc
+# 全量类型检查）。类型检查属于代码质量门禁，该在 CI 做；放进部署流水线
+# 只会让一个无关的类型告警把发布卡住。
+RUN pnpm exec vite build --mode ${VITE_MODE} \
+ && test -f dist/index.html \
+ || (echo "✗ 构建产物里没有 index.html，构建实际失败了" && exit 1)
+
+
+# ── 导出阶段：scratch 镜像，只承载文件 ────────────────────────────────
+#  配合 --output type=local 使用时，BuildKit 会把这一层的文件系统直接
+#  写到宿主目录，不会真的产生镜像。
+FROM scratch AS export
+
+COPY --from=builder /app/dist /

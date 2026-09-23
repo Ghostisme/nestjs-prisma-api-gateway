@@ -1,0 +1,317 @@
+// ═══════════════════════════════════════════════════════════════════════
+//  lumax / 前端 — 独立流水线（静态发布，不跑容器）
+//
+//  Jenkins 建 job 时（类型选「流水线」）Script Path 填：web/Jenkinsfile
+//  （Jenkins 把整个仓库 checkout 到工作区根，下面路径都从仓库根算起）
+//
+//  这是六条流水线里唯一不产出运行容器的：Vite 打出来的是纯静态文件，
+//  由宿主机的 nginx 直接托管。所以"部署"就是一次 rsync —— 零重启、
+//  零冷启动，也没有健康检查等待。
+//
+//  构建仍然在容器里完成（BuildKit 把产物导出到工作区），所以 Jenkins
+//  所在的机器不需要装 Node 和 pnpm，产出文件的属主也还是 Jenkins 自己，
+//  不会出现挂载卷带来的 root 权限文件。
+//
+//  ── 前置：Jenkins 需要对静态目录有写权限 ──────────────────────────
+//    sudo setfacl -R -m u:jenkins:rwx /opt/portfolio/lumax/web
+//    sudo setfacl -d -m u:jenkins:rwx /opt/portfolio/lumax/web
+//  （见 _infra/README.md 的「首次部署」章节）
+// ═══════════════════════════════════════════════════════════════════════
+
+pipeline {
+  agent any
+
+  options {
+    timestamps()
+    timeout(time: 25, unit: 'MINUTES')
+    disableConcurrentBuilds()
+    buildDiscarder(logRotator(numToKeepStr: '20'))
+  }
+
+  // ── 触发方式 ──────────────────────────────────────────────────────
+  //  构建哪个分支由 job 配置里的 Branch Specifier 决定（填 */main），
+  //  下面的阶段不再判断分支 —— 也就是说改那个字段就等于改部署目标，
+  //  别随手改成 */develop，那会把开发分支的代码发到生产。
+  triggers {
+    // GitHub webhook 推送即触发。
+    // job 配置里也要勾上 "GitHub hook trigger for GITScm polling"，
+    // 两者配合才生效。
+    githubPush()
+    // 兜底：每 4 小时轮询一次，防止 webhook 偶尔丢失（网络抖动、
+    // GitHub 侧重试失败）。不需要可以删掉这行。
+    pollSCM('H H/4 * * *')
+  }
+  parameters {
+    booleanParam(
+      name: 'FORCE_REBUILD',
+      defaultValue: false,
+      description: '忽略变更检测，强制重新构建并发布。改了 web.env 里的域名后必须勾这个 —— VITE_* 是构建期内联进 JS bundle 的，不重新构建不会生效。'
+    )
+    booleanParam(
+      name: 'NO_CACHE',
+      defaultValue: false,
+      description: '禁用 Docker 层缓存。只在怀疑缓存脏了时用 —— 正常的依赖变更不需要勾这个。'
+    )
+  }
+
+  environment {
+    WEB_BUILD_ENV = '/opt/portfolio/lumax/web.env'
+    WEB_ROOT      = '/opt/portfolio/lumax/web'
+    DOCKER_BUILDKIT = '1'
+  }
+
+  stages {
+
+    stage('环境自检') {
+      steps {
+        sh '''
+          set -e
+          echo ">>> Docker  $(docker --version)"
+
+          if [ ! -f "${WEB_BUILD_ENV}" ]; then
+            echo "✗ 找不到 ${WEB_BUILD_ENV}"
+            echo "  这份文件提供 Vite 的构建期变量（VITE_*），"
+            echo "  见 _infra/README.md 的「首次部署」章节"
+            exit 1
+          fi
+
+          if [ ! -d "${WEB_ROOT}" ]; then
+            echo "✗ 站点目录 ${WEB_ROOT} 不存在"
+            exit 1
+          fi
+
+          # 没有写权限就白构建一场，提前拦住
+          if [ ! -w "${WEB_ROOT}" ]; then
+            echo "✗ 当前用户($(id -un))对 ${WEB_ROOT} 没有写权限"
+            echo "  在服务器上执行："
+            echo "    sudo setfacl -R -m u:jenkins:rwx ${WEB_ROOT}"
+            echo "    sudo setfacl -d -m u:jenkins:rwx ${WEB_ROOT}"
+            exit 1
+          fi
+
+          # 前端产物要用 BuildKit 的 --output 导出到宿主目录，
+          # 老版本 Docker 不支持这个标志
+          docker build --help 2>&1 | grep -q -- '--output' \\
+            || { echo "✗ 当前 Docker 不支持 --output（需要 BuildKit / Docker 23+）"; exit 1; }
+        '''
+      }
+    }
+
+    stage('变更分析') {
+      steps {
+        script {
+          def watchPaths = ['web/']
+          def depFiles   = ['web/package.json', 'web/pnpm-lock.yaml']
+          def infraFiles = ['web/Dockerfile.static', 'web/Jenkinsfile',
+                            'web/.dockerignore', 'web/vite.config.ts']
+
+          def previous = env.GIT_PREVIOUS_SUCCESSFUL_COMMIT
+          def changed = null
+
+          if (params.FORCE_REBUILD) {
+            echo '已勾选 FORCE_REBUILD → 强制重新构建'
+          } else if (!previous) {
+            echo '没有「上次成功构建」记录（首次构建或历史被清理）→ 全量构建'
+          } else {
+            def diff = sh(
+              script: "git diff --name-only ${previous} ${env.GIT_COMMIT} 2>/dev/null || true",
+              returnStdout: true).trim()
+            if (diff) {
+              changed = diff.split('\n').collect { it.trim() }.findAll { it }
+            } else {
+              echo '拿不到有效 diff（可能 force push 过）→ 全量构建'
+            }
+          }
+
+          boolean srcChanged = false
+          boolean depChanged = false
+          int srcCount = 0
+          def changedDepFiles = []
+
+          if (changed == null) {
+            srcChanged = true
+            depChanged = true
+          } else {
+            def mine = changed.findAll { p ->
+              // web/docs/ 下是截图之类，不影响构建产物
+              watchPaths.any { w -> p.startsWith(w) } && !p.startsWith('web/docs/')
+            }
+
+            changedDepFiles = mine.findAll { it in depFiles }
+            depChanged = !changedDepFiles.isEmpty()
+
+            def srcFiles = mine.findAll { p ->
+              !(p in depFiles) && !(p ==~ /(?i).*\.(md|txt)$/)
+            }
+            srcCount = srcFiles.size()
+            srcChanged = srcCount > 0
+
+            if (mine.any { it in infraFiles }) {
+              echo '构建配置有变更 → 强制重新构建'
+              srcChanged = true
+            }
+          }
+
+          boolean needBuild = srcChanged || depChanged
+
+          // 兜底：站点目录是空的（首次部署或被清理过），必须构建
+          if (!needBuild) {
+            int hasIndex = sh(returnStatus: true, script: "[ -f '${env.WEB_ROOT}/index.html' ]")
+            if (hasIndex != 0) {
+              echo "${env.WEB_ROOT} 里没有 index.html → 强制构建"
+              needBuild = true
+              srcChanged = true
+            }
+          }
+
+          env.NEED_BUILD   = needBuild.toString()
+          env.DEPS_CHANGED = depChanged.toString()
+
+          // ── 打包决策表 ──────────────────────────────────────────
+          String basis = previous ? "${previous.take(7)}（上次成功构建）" : '无（首次构建）'
+          String srcLine = srcChanged ? "是   ${srcCount} 个文件" : '否'
+          String depLine
+          if (depChanged) {
+            depLine = "是   ${changedDepFiles.join(', ')}\n                    → install 层缓存失效，本次会重跑 pnpm install"
+          } else {
+            depLine = '否   → install 层命中缓存，完全跳过依赖安装'
+          }
+          String verdict = needBuild ? '重新构建并发布静态产物' : '跳过 —— 本模块无变更'
+
+          echo """
+────────────────────────────────────────────────────────────────
+  打包决策 · lumax / web（静态发布）
+────────────────────────────────────────────────────────────────
+  比较基点      ${basis}
+  本次提交      ${env.GIT_COMMIT?.take(7) ?: '-'}
+
+  源码变更      ${srcLine}
+  依赖变更      ${depLine}
+
+  结论          ${verdict}
+────────────────────────────────────────────────────────────────
+"""
+
+          currentBuild.description = needBuild ? "构建并发布" : '无变更，已跳过'
+        }
+      }
+    }
+
+    stage('构建静态产物') {
+      when { environment name: 'NEED_BUILD', value: 'true' }
+      steps {
+        script {
+          if (env.DEPS_CHANGED == 'true') {
+            echo '依赖清单有变更：pnpm install 会重跑，但 pnpm store 挂了 cache mount，已下载过的包会直接复用'
+          }
+          sh """
+            set -e
+
+            # Vite 的 --mode production 会读 web/.env.production。
+            # 仓库里只有 .env.example，真实配置在服务器上，构建前拷进上下文
+            # （web/.dockerignore 没有排除 .env.production，所以它能进去）。
+            cp '${env.WEB_BUILD_ENV}' web/.env.production
+            echo '>>> 前端构建变量：'
+            grep -E '^VITE_' web/.env.production | sed 's/^/    /'
+
+            # 上次的产物要先清掉：--output type=local 只覆盖同名文件，
+            # 不会删除已经不存在于新产物里的旧文件（比如上一版的
+            # assets/index-OLDHASH.js），残留会让目录越积越大
+            rm -rf web-dist
+            mkdir -p web-dist
+
+            docker build \\
+              -f web/Dockerfile.static \\
+              --target export \\
+              --output type=local,dest=web-dist \\
+              ${params.NO_CACHE ? '--no-cache' : ''} \\
+              web
+
+            test -f web-dist/index.html \\
+              || { echo '✗ 构建产物里没有 index.html'; exit 1; }
+
+            echo '>>> 产物清单'
+            du -sh web-dist
+            ls -la web-dist | head -20
+          """
+        }
+      }
+    }
+
+    stage('发布') {
+      when { environment name: 'NEED_BUILD', value: 'true' }
+      steps {
+        sh '''
+          set -e
+          echo ">>> 同步静态产物到 ${WEB_ROOT}"
+
+          # 备份当前版本，便于出问题时快速回退（只留一份）
+          if [ -f "${WEB_ROOT}/index.html" ]; then
+            rm -rf "${WEB_ROOT}.prev"
+            cp -a "${WEB_ROOT}" "${WEB_ROOT}.prev"
+            echo "    已备份上一版到 ${WEB_ROOT}.prev"
+          fi
+
+          # --delete-after 很关键：让删除动作发生在全部新文件传完之后。
+          # 配合 Vite 产物带 hash 的文件名，整个过程中 index.html 引用的
+          # 资源始终是存在的，不会出现「新 index.html 已就位、但它引用的
+          # 新 assets 还没传完」导致的白屏窗口。
+          rsync -a --delete-after --human-readable web-dist/ "${WEB_ROOT}/"
+
+          echo ">>> 当前站点内容"
+          ls -la "${WEB_ROOT}" | head -20
+        '''
+      }
+    }
+
+    stage('发布校验') {
+      when { environment name: 'NEED_BUILD', value: 'true' }
+      steps {
+        // 静态站点没有进程可探活，改为校验入口文件和它引用的资源都在位 ——
+        // 这正好能抓住"部署了一半"这种最常见的静态发布事故
+        sh '''
+          set -e
+          test -f "${WEB_ROOT}/index.html" || { echo "✗ index.html 缺失"; exit 1; }
+
+          grep -oE 'src="[^"]*\\.js"' "${WEB_ROOT}/index.html" | head -3 \
+            | sed 's/src="//; s/"//' | while read -r asset; do
+                f="${WEB_ROOT}/${asset#/}"
+                if [ -f "$f" ]; then
+                  echo "    ✓ $asset"
+                else
+                  echo "    ✗ $asset 引用的文件不存在"
+                  exit 1
+                fi
+              done
+
+          echo "✓ 静态产物校验通过"
+        '''
+      }
+    }
+  }
+
+  post {
+    failure {
+      script {
+        if (env.NEED_BUILD == 'true') {
+          sh '''
+            set +e
+            if [ -d "${WEB_ROOT}.prev" ]; then
+              echo "── 回滚到上一版静态产物 ─────────────────────────"
+              rsync -a --delete-after "${WEB_ROOT}.prev/" "${WEB_ROOT}/"
+              echo "已回滚"
+            else
+              echo "没有备份可回滚（首次部署）"
+            fi
+          '''
+        }
+      }
+    }
+    always {
+      // 产物在工作区里有几十 MB，构建完就没用了；
+      // .env.production 含构建期配置，也不该留在工作区
+      sh 'rm -rf web-dist web/.env.production 2>/dev/null || true'
+      sh 'docker builder prune -f --filter until=168h >/dev/null 2>&1 || true'
+    }
+  }
+}
