@@ -245,18 +245,31 @@ pipeline {
           set -e
           echo ">>> 同步静态产物到 ${WEB_ROOT}"
 
-          # 备份当前版本，便于出问题时快速回退（只留一份）
+          # ⚠️ 不能用 rsync -a。它等价于 -rlptgoD，其中 -g/-o 会尝试保留属主
+          #    和组，而目标目录属主是 root:root（Jenkins 只有 ACL 授予的读写
+          #    权限，改所有权是另一回事，非 root 做不到），于是报
+          #    chgrp ... Operation not permitted 并以 code 23 退出。
+          #
+          #    静态发布本来就不需要保留属主：文件由 jenkins 创建，nginx 只要
+          #    读权限（默认 644 足够）。所以显式关掉这两项。
+          RSYNC_OPTS="-a --no-owner --no-group --human-readable"
+
+          # 备份上一版，便于快速回退（只留一份）。
+          #
+          # 备份放在 web/.prev 而不是同级的 web.prev：jenkins 对父目录
+          # /opt/portfolio/lumax 只有 rx 没有 w，创建不了同级目录。放在 web/
+          # 内部则完全在授权范围内，代价是发布时要把它排除掉。
+          BACKUP="${WEB_ROOT}/.prev"
           if [ -f "${WEB_ROOT}/index.html" ]; then
-            rm -rf "${WEB_ROOT}.prev"
-            cp -a "${WEB_ROOT}" "${WEB_ROOT}.prev"
-            echo "    已备份上一版到 ${WEB_ROOT}.prev"
+            rsync $RSYNC_OPTS --delete --exclude='.prev' "${WEB_ROOT}/" "${BACKUP}/"
+            echo "    已备份上一版到 ${BACKUP}"
           fi
 
           # --delete-after 很关键：让删除动作发生在全部新文件传完之后。
           # 配合 Vite 产物带 hash 的文件名，整个过程中 index.html 引用的
           # 资源始终是存在的，不会出现「新 index.html 已就位、但它引用的
           # 新 assets 还没传完」导致的白屏窗口。
-          rsync -a --delete-after --human-readable web-dist/ "${WEB_ROOT}/"
+          rsync $RSYNC_OPTS --delete-after --exclude='.prev' web-dist/ "${WEB_ROOT}/"
 
           echo ">>> 当前站点内容"
           ls -la "${WEB_ROOT}" | head -20
@@ -296,9 +309,10 @@ pipeline {
         if (env.NEED_BUILD == 'true') {
           sh '''
             set +e
-            if [ -d "${WEB_ROOT}.prev" ]; then
+            if [ -f "${WEB_ROOT}/.prev/index.html" ]; then
               echo "── 回滚到上一版静态产物 ─────────────────────────"
-              rsync -a --delete-after "${WEB_ROOT}.prev/" "${WEB_ROOT}/"
+              rsync -a --no-owner --no-group --delete-after --exclude='.prev' \
+                "${WEB_ROOT}/.prev/" "${WEB_ROOT}/"
               echo "已回滚"
             else
               echo "没有备份可回滚（首次部署）"
